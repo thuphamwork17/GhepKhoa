@@ -1,0 +1,17 @@
+{
+  "_ghi_chu": "Cấu hình cho bộ công cụ ghép khóa. Sửa file này thay vì sửa code.",
+
+  "thu_tu_hang": ["B", "B1", "B2", "C1", "C", "B-D2", "D2", "CE", "D", "E", "FC"],
+
+  "cot_mac_dinh": {
+    "H_co_mp": "CÓ MP",
+    "F_ki_ten": ""
+  },
+
+  "kiem_tra": {
+    "do_dai_cccd": 12,
+    "canh_bao_khoa_go_nham": true
+  },
+
+  "ten_file_ra": "DS ghép khóa TN với {khoa} {ngay}.xls"
+}

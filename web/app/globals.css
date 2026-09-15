@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+/* Nền trắng cố định. Khai báo color-scheme để trình duyệt không tự tô tối
+   các ô nhập, dropdown, thanh cuộn khi máy người dùng đang để chế độ tối. */
+:root {
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-muc: #0b5590; /* xanh hành chính, dùng cho tiêu đề và nút chính */
+  --color-muc-dam: #0a4878;
+  --color-muc-nhat: #eaf2f9;
+  --color-vien: #dfe4ec;
+}
+
+html {
+  background: #ffffff;
+}
+
+body {
+  background: #ffffff;
+  color: #17202e;
+  font-family:
+    "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Ô nhập dùng lại nhiều chỗ — gom vào đây cho đồng bộ và đỡ lặp class. */
+.o-nhap {
+  width: 100%;
+  border: 1px solid var(--color-vien);
+  border-radius: 0.5rem;
+  background: #ffffff;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+  color: #17202e;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.o-nhap::placeholder {
+  color: #9aa4b4;
+}
+.o-nhap:focus {
+  border-color: var(--color-muc);
+  box-shadow: 0 0 0 3px rgba(11, 85, 144, 0.12);
+}
+.o-nhap.loi {
+  border-color: #c0392b;
+}
+.o-nhap.loi:focus {
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.14);
+}
+
+.the {
+  background: #ffffff;
+  border: 1px solid var(--color-vien);
+  border-radius: 0.75rem;
+}
