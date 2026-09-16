@@ -1,0 +1,34 @@
+name: Deploy to Local Windows Server
+
+on:
+  push:
+    branches:
+      - main  # Trigger khi code được push lên nhánh main
+
+jobs:
+  deploy:
+    runs-on: self-hosted  # Chạy trực tiếp trên máy chủ Windows cục bộ của bạn
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20' # Hoặc phiên bản Node bạn đang dùng
+          
+      - name: Install Dependencies
+        run: |
+          cd web
+          npm install
+
+      - name: Build Next.js App
+        run: |
+          cd web
+          npm run build
+
+      - name: Restart PM2
+        run: |
+          # Khởi động lại PM2 đã chạy trước đó ở phần 2
+          pm2 restart GhepKhoa
