@@ -18,6 +18,6 @@ jobs:
           git fetch --all
           git reset --hard origin/main
           cd web
-          npm install
-          npm run build
-          pm2 restart GhepKhoa
+          call npm install
+          call npm run build
+          call pm2 restart GhepKhoa
