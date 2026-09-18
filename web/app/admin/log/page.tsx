@@ -73,7 +73,7 @@ export default async function Trang() {
       </div>
 
       <section className="the mt-5 overflow-x-auto">
-        <table className="w-full text-[14px]">
+        <table className="w-full min-w-[800px] text-[14px]">
           <thead>
             <tr className="border-b border-[#dfe4ec] bg-[#f7f9fc] text-left text-[12px] uppercase tracking-wide text-[#5c6878]">
               <th className="px-3 py-3 font-semibold">Thời điểm</th>

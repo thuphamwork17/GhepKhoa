@@ -71,6 +71,8 @@ export type DangKy = {
   KetQuaKhoaGoc: string | null;
   LechCccd: boolean;
   LechKhoa: boolean;
+  TrangThaiHoSo?: string | null;
+  ChiTietThieu?: string | null;
 };
 
 /* ----------------------------------------------------------------- đơn vị -- */
@@ -305,6 +307,8 @@ export type HoSoHocVien = {
   TaoLuc: Date;
   CapNhatLuc: Date;
   NguoiCapNhatId: number | null;
+  MaKhoaDich?: string | null;
+  NgayThiDich?: Date | null;
 };
 
 export type LichSuHoSoItem = {
@@ -843,49 +847,43 @@ export async function timKiemHoSo(opt: {
   }
 
   const ts: any = {};
-  const dk = ["DaXoa = 0"];
+  const dk = ["hs.DaXoa = 0"];
 
-  // Bỏ giới hạn DonViId để xem được cả 2 bên nếu dùng dashboard tổng
-  // if (opt.donViId) {
-  //   dk.push("DonViId = @dv");
-  //   ts.dv = { kieu: sql.Int, gt: opt.donViId };
-  // }
   if (opt.hangMa) {
-    dk.push("HangMa = @hang");
+    dk.push("hs.HangMa = @hang");
     ts.hang = { kieu: sql.VarChar, gt: opt.hangMa };
   }
   if (opt.maKhoa) {
-    dk.push("MaKhoa = @mk");
-    ts.mk = { kieu: sql.VarChar, gt: opt.maKhoa };
+    dk.push("hs.MaKhoa = @khoa");
+    ts.khoa = { kieu: sql.VarChar, gt: opt.maKhoa };
   }
   if (opt.giaoVien) {
-    dk.push("GiaoVien = @gv");
-    ts.gv = { kieu: sql.NVarChar, gt: opt.giaoVien };
+    dk.push("hs.GiaoVien LIKE @gv");
+    ts.gv = { kieu: sql.NVarChar, gt: `%${opt.giaoVien}%` };
   }
   if (opt.trangThai) {
-    dk.push("TrangThaiHoSo = @tt");
+    dk.push("hs.TrangThaiHoSo = @tt");
     ts.tt = { kieu: sql.VarChar, gt: opt.trangThai };
   }
   if (opt.ngayGhep) {
     dk.push(`EXISTS (
-      SELECT 1 
-      FROM dbo.DangKyGhepKhoa dk
-      JOIN dbo.DotThi dt ON dk.DotId = dt.DotId
-      WHERE CAST(dt.NgayThi AS DATE) = @ngayGhep 
-        AND dk.CccdKhai = dbo.HoSoHocVien.Cccd
-        AND dk.MaKhoaGocKhai = dbo.HoSoHocVien.MaKhoa
-        AND dk.TrangThai = 'DUYET'
+      SELECT 1 FROM dbo.DangKyGhepKhoa _dk
+      JOIN dbo.vw_Dot _dot ON _dot.DotId = _dk.DotId
+      WHERE _dk.CccdKhai = hs.Cccd 
+        AND _dk.MaKhoaGocKhai = hs.MaKhoa
+        AND _dk.TrangThai = 'DUYET'
+        AND _dot.NgayThi = @ngayGhep
     )`);
     ts.ngayGhep = { kieu: sql.Date, gt: opt.ngayGhep };
   }
   if (opt.tuKhoa) {
-    dk.push("(HoTen LIKE @tk OR Cccd LIKE @tk OR SoDienThoai LIKE @tk OR GiaoVien LIKE @tk)");
+    dk.push("(hs.HoTen LIKE @tk OR hs.Cccd LIKE @tk OR hs.SoDienThoai LIKE @tk OR hs.GiaoVien LIKE @tk)");
     ts.tk = { kieu: sql.NVarChar, gt: `%${opt.tuKhoa}%` };
   }
 
   const where = "WHERE " + dk.join(" AND ");
   const countRes = await motDong<{ Total: number }>(
-    `SELECT COUNT(*) AS Total FROM dbo.HoSoHocVien ${where}`,
+    `SELECT COUNT(*) AS Total FROM dbo.HoSoHocVien hs ${where}`,
     ts
   );
   const tong = countRes?.Total || 0;
@@ -895,9 +893,20 @@ export async function timKiemHoSo(opt: {
   const skip = (trang - 1) * soDong;
 
   const query = `
-    SELECT * FROM dbo.HoSoHocVien 
+    SELECT hs.*, 
+           ghep.MaKhoaDich, ghep.NgayThi AS NgayThiDich
+    FROM dbo.HoSoHocVien hs
+    OUTER APPLY (
+        SELECT TOP 1 dot.MaKhoaDich, dot.NgayThi
+        FROM dbo.DangKyGhepKhoa d
+        JOIN dbo.vw_Dot dot ON dot.DotId = d.DotId
+        WHERE d.CccdKhai = hs.Cccd 
+          AND d.MaKhoaGocKhai = hs.MaKhoa 
+          AND d.TrangThai = 'DUYET'
+        ORDER BY d.TaoLuc DESC
+    ) ghep
     ${where}
-    ORDER BY MaKhoa DESC, HoTen ASC
+    ORDER BY hs.MaKhoa DESC, hs.HoTen ASC
     OFFSET ${skip} ROWS FETCH NEXT ${soDong} ROWS ONLY
   `;
 

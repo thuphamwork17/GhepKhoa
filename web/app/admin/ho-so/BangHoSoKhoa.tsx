@@ -127,7 +127,7 @@ export default function BangHoSoKhoa({
 
       {/* Main Table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse text-[13px]">
+        <table className="w-full min-w-[900px] text-left border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold uppercase tracking-wider text-slate-600">
               <th className="py-3 px-3.5 text-center w-12">STT</th>
@@ -196,33 +196,41 @@ export default function BangHoSoKhoa({
                             {hs.DiaChi}
                           </div>
                         )}
-                        {(() => {
-                          const missingDocs = [];
-                          if (hs.GiayKhamTrangThai !== "DU") missingDocs.push("KSK");
-                          if (hs.DonHocTrangThai !== "DU" && hs.DonHocTrangThai !== "KHONG_CAN") missingDocs.push("Đơn");
-                          if (hs.HopDongTrangThai !== "DU") missingDocs.push("HĐ");
-                          if (hs.BangKhaiTrangThai !== "DU" && hs.BangKhaiTrangThai !== "KHONG_CAN") missingDocs.push("BK");
-                          if (hs.CccdTrangThai !== "DU") missingDocs.push("CCCD");
-                          if (hs.Hinh1MTrangThai !== "DU") missingDocs.push("Ảnh");
-                          
-                          if (missingDocs.length > 0) {
+                          {(() => {
+                            const missingDocs = [];
+                            if (hs.GiayKhamTrangThai !== "DU") missingDocs.push("KSK");
+                            if (hs.DonHocTrangThai !== "DU" && hs.DonHocTrangThai !== "KHONG_CAN") missingDocs.push("Đơn");
+                            if (hs.BangKhaiTrangThai !== "DU" && hs.BangKhaiTrangThai !== "KHONG_CAN") missingDocs.push("BK");
+                            if (hs.CccdTrangThai !== "DU") missingDocs.push("CCCD");
+                            
                             return (
-                              <div className="mt-1 flex items-center gap-1.5">
-                                <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
-                                  Thiếu: {missingDocs.join(", ")}
-                                </span>
+                              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                                {missingDocs.length > 0 ? (
+                                  <span className="text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                                    Thiếu: {missingDocs.join(", ")}
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                    Đủ hồ sơ
+                                  </span>
+                                )}
+
+                                {/* Đợt ghép */}
+                                {hs.MaKhoaDich ? (
+                                  <span className="text-[10px] font-bold text-violet-700 bg-violet-50 px-1.5 py-0.5 rounded border border-violet-200 flex items-center gap-1" title="Đã xếp vào đợt thi">
+                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    {hs.MaKhoaDich}
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-medium text-slate-400 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 border-dashed">
+                                    Chưa xếp đợt
+                                  </span>
+                                )}
                               </div>
                             );
-                          } else {
-                            return (
-                              <div className="mt-1 flex items-center gap-1.5">
-                                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                                  Đủ hồ sơ
-                                </span>
-                              </div>
-                            );
-                          }
-                        })()}
+                          })()}
                       </div>
                     </td>
 

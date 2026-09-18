@@ -61,12 +61,15 @@ SELECT v.*,
        SapXep1   = k.TenRiengKhai COLLATE Latin1_General_CI_AI,
        SapXep2   = k.TenRiengKhai COLLATE Vietnamese_CI_AS,
        SapXep3   = k.HoKhai       COLLATE Latin1_General_CI_AI,
-       SapXep4   = k.HoKhai       COLLATE Vietnamese_CI_AS
+       SapXep4   = k.HoKhai       COLLATE Vietnamese_CI_AS,
+       TrangThaiHoSo = hs.TrangThaiHoSo,
+       ChiTietThieu  = hs.ChiTietThieu
 FROM dbo.vw_DangKy v
 JOIN dbo.DangKyGhepKhoa k ON k.DangKyId = v.DangKyId
 LEFT JOIN dbo.HocVienKhoa hvk ON hvk.HocVienKhoaId = v.HocVienKhoaId
 LEFT JOIN dbo.Khoa kg         ON kg.KhoaId = hvk.KhoaId
-LEFT JOIN dbo.HangGPLX h      ON h.HangMa = kg.HangMa;
+LEFT JOIN dbo.HangGPLX h      ON h.HangMa = kg.HangMa
+LEFT JOIN dbo.HoSoHocVien hs  ON hs.Cccd = v.CccdHoSo AND hs.MaKhoa = v.MaKhoaGocHoSo;
 GO
 
 PRINT N'004_sap_xep_ten.sql — xong.';

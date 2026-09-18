@@ -130,7 +130,7 @@ export default async function Trang({
         />
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-4">
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
           ["Tổng đăng ký", ds.length, "text-[#0b5590]"],
           ["Chờ đối chiếu", dem.cho, "text-[#7a5a12]"],
@@ -213,7 +213,7 @@ export default async function Trang({
       </div>
 
       <section className="the mt-5 overflow-x-auto">
-        <table className="w-full text-[14px]">
+        <table className="w-full min-w-[800px] text-[14px]">
           <thead>
             <tr className="border-b border-[#dfe4ec] bg-[#f7f9fc] text-left text-[12px] uppercase tracking-wide text-[#5c6878]">
               <th className="px-3 py-3 font-semibold">#</th>
@@ -301,6 +301,26 @@ export default async function Trang({
                         <div className="mt-0.5 text-[11px] tabular-nums text-[#7a8494]">
                           {d.MaHocVien}
                         </div>
+                        {d.TrangThaiHoSo && (
+                          <div className="mt-1.5 flex items-center gap-1.5">
+                            {d.TrangThaiHoSo === "DU" ? (
+                              <span className="inline-block text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                Đủ hồ sơ
+                              </span>
+                            ) : d.TrangThaiHoSo === "THIEU" ? (
+                              <span 
+                                className="inline-block text-[10px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200 truncate max-w-[150px]"
+                                title={d.ChiTietThieu || "Thiếu hồ sơ"}
+                              >
+                                {d.ChiTietThieu || "Thiếu hồ sơ"}
+                              </span>
+                            ) : (
+                              <span className="inline-block text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                                Chưa kiểm tra hồ sơ
+                              </span>
+                            )}
+                          </div>
+                        )}
                         {d.LechCccd && (
                           <div className="mt-1 text-[12px] font-medium text-[#8f2a1d]">
                             CCCD hồ sơ: {d.CccdHoSo}

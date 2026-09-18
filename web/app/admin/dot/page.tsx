@@ -182,20 +182,21 @@ export default async function Trang({
             </div>
           )}
 
-          <div className="the overflow-hidden">
-            <div className="grid grid-cols-7 border-b border-[#dfe4ec] bg-[#f7f9fc]">
-              {TEN_THU.map((t) => (
-                <div
-                  key={t}
-                  className="px-2 py-2 text-center text-[12px] font-semibold uppercase tracking-wide text-[#5c6878]"
-                >
-                  {t}
-                </div>
-              ))}
-            </div>
+          <div className="the overflow-x-auto">
+            <div className="min-w-[600px]">
+              <div className="grid grid-cols-7 border-b border-[#dfe4ec] bg-[#f7f9fc]">
+                {TEN_THU.map((t) => (
+                  <div
+                    key={t}
+                    className="px-2 py-2 text-center text-[12px] font-semibold uppercase tracking-wide text-[#5c6878]"
+                  >
+                    {t}
+                  </div>
+                ))}
+              </div>
 
-            <div className="grid grid-cols-7">
-              {o.map((c) => {
+              <div className="grid grid-cols-7">
+                {o.map((c) => {
                 const ds = theoNgay.get(c.iso) ?? [];
                 const dangChon = c.iso === ngayChon;
                 return (
@@ -252,6 +253,7 @@ export default async function Trang({
                 );
               })}
             </div>
+          </div>
           </div>
         </section>
 

@@ -123,8 +123,8 @@ export default function NhapNhanh({
       <h2 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-[#0b5590]">
         Nhập nhanh — tự động đối chiếu ngay
       </h2>
-      <form action={gui} className="flex flex-wrap items-end gap-3">
-        <label className="block">
+      <form action={gui} className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end gap-3">
+        <label className="block w-full sm:w-auto">
           <span className="block text-[12px] font-semibold text-[#334155]">
             Đợt ghép <span className="text-[#c0392b]">*</span>
           </span>
@@ -133,7 +133,7 @@ export default function NhapNhanh({
             required
             value={dotId}
             onChange={(e) => setDotId(Number(e.target.value))}
-            className="o-nhap mt-1 w-56"
+            className="o-nhap mt-1 w-full sm:w-56"
           >
             {dots.map((d) => (
               <option key={d.DotId} value={d.DotId}>
@@ -143,7 +143,7 @@ export default function NhapNhanh({
           </select>
         </label>
 
-        <label className="relative block">
+        <label className="relative block w-full sm:w-auto">
           <span className="block text-[12px] font-semibold text-[#334155]">
             Họ và tên <span className="text-[#c0392b]">*</span>
           </span>
@@ -161,10 +161,10 @@ export default function NhapNhanh({
             }}
             onFocus={() => setHienGoiY(true)}
             onBlur={() => setTimeout(() => setHienGoiY(false), 150)}
-            className="o-nhap mt-1 w-56"
+            className="o-nhap mt-1 w-full sm:w-56"
           />
           {dangHienGoiY && (
-            <ul className="the absolute left-0 top-full z-10 mt-1 max-h-56 w-64 overflow-y-auto py-1">
+            <ul className="the absolute left-0 top-full z-10 mt-1 max-h-56 w-full sm:w-64 overflow-y-auto py-1">
               {goiY.map((g, i) => (
                 <li key={i}>
                   <button
@@ -186,54 +186,58 @@ export default function NhapNhanh({
           )}
         </label>
 
-        <label className="block">
-          <span className="block text-[12px] font-semibold text-[#334155]">
-            Khóa cũ <span className="text-[#c0392b]">*</span>
-          </span>
-          <input
-            name="khoaGoc"
-            required
-            placeholder="C1K52"
-            value={khoaGoc}
-            onChange={(e) => setKhoaGoc(e.target.value)}
-            className="o-nhap mt-1 w-32"
-          />
-        </label>
-
-        <label className="block">
-          <span className="block text-[12px] font-semibold text-[#334155]">
-            Giáo viên
-          </span>
-          <input
-            name="giaoVien"
-            placeholder="Tên giáo viên"
-            className="o-nhap mt-1 w-44"
-          />
-        </label>
-
-        <label className="block">
-          <span className="block text-[12px] font-semibold text-[#334155]">
-            Ngày sinh{" "}
-            <span className="text-[11px] font-normal text-[#7a8494]">
-              (nếu trùng tên)
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <label className="block w-full sm:w-auto">
+            <span className="block text-[12px] font-semibold text-[#334155]">
+              Khóa cũ <span className="text-[#c0392b]">*</span>
             </span>
-          </span>
-          <input
-            name="ngaySinh"
-            type="date"
-            value={ngaySinh}
-            onChange={(e) => setNgaySinh(e.target.value)}
-            className="o-nhap mt-1 w-40"
-          />
-        </label>
+            <input
+              name="khoaGoc"
+              required
+              placeholder="C1K52"
+              value={khoaGoc}
+              onChange={(e) => setKhoaGoc(e.target.value)}
+              className="o-nhap mt-1 w-full sm:w-32"
+            />
+          </label>
 
-        <button
-          type="submit"
-          disabled={dangGui || dotId === ""}
-          className="rounded-lg bg-[#0b5590] px-5 py-2 text-[13px] font-semibold text-white transition hover:bg-[#0a4878] disabled:opacity-60"
-        >
-          {dangGui ? "Đang đối chiếu…" : "Thêm"}
-        </button>
+          <label className="block w-full sm:w-auto">
+            <span className="block text-[12px] font-semibold text-[#334155]">
+              Giáo viên
+            </span>
+            <input
+              name="giaoVien"
+              placeholder="Tên giáo viên"
+              className="o-nhap mt-1 w-full sm:w-44"
+            />
+          </label>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <label className="block w-full sm:w-auto">
+            <span className="block text-[12px] font-semibold text-[#334155]">
+              Ngày sinh{" "}
+              <span className="text-[11px] font-normal text-[#7a8494]">
+                (nếu trùng tên)
+              </span>
+            </span>
+            <input
+              name="ngaySinh"
+              type="date"
+              value={ngaySinh}
+              onChange={(e) => setNgaySinh(e.target.value)}
+              className="o-nhap mt-1 w-full sm:w-40"
+            />
+          </label>
+
+          <button
+            type="submit"
+            disabled={dangGui || dotId === ""}
+            className="mt-1 sm:mt-0 w-full sm:w-auto rounded-lg bg-[#0b5590] px-5 py-2.5 sm:py-2 text-[13px] font-semibold text-white transition hover:bg-[#0a4878] disabled:opacity-60"
+          >
+            {dangGui ? "Đang đối chiếu…" : "Thêm"}
+          </button>
+        </div>
       </form>
 
       {kq.loi && (

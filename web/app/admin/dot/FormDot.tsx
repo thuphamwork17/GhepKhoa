@@ -132,7 +132,7 @@ export default function FormDot({
         </span>
       </label>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <label className="block">
           <span className={nhan}>
             Ngày thi <span className="text-[#c0392b]">*</span>

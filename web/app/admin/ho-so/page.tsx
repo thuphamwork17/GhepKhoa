@@ -98,9 +98,9 @@ export default async function TrangHoSo({
         </div>
       </div>
 
-      {/* KPI Stats Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3.5">
-        {/* Total */}
+      {/* ------------------------------------------------ Tóm tắt số liệu -- */}
+      <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Tổng số hồ sơ */}
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-slate-500">
             <span>Tổng số hồ sơ</span>
@@ -157,7 +157,7 @@ export default async function TrangHoSo({
 
         {/* Breakdown of missing items */}
         
-      </div>
+      </section>
 
       {/* Filter Toolbar */}
       <BoLocHoSo

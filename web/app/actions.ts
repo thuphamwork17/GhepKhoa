@@ -838,9 +838,8 @@ function tinhTrangThaiHoSo(d: {
   if (d.CccdTrangThai === "THIEU") thieu.push("CCCD");
   if (d.GiayKhamTrangThai === "THIEU" || d.GiayKhamTrangThai === "CAN_KY") thieu.push("Giấy khám SK");
   if (d.DonHocTrangThai === "THIEU" || d.DonHocTrangThai === "CAN_KY") thieu.push("Đơn học");
-  if (d.HopDongTrangThai === "THIEU") thieu.push("Hợp đồng");
-  if (d.Hinh1MTrangThai === "THIEU") thieu.push("Ảnh 1M");
   if (d.BangKhaiTrangThai === "THIEU") thieu.push("Bản khai");
+  // Hợp đồng và Ảnh 1 màu là tùy chọn (optional), nên dù THIẾU vẫn không tính là hồ sơ thiếu.
 
   if (thieu.length > 0) {
     return {
@@ -848,12 +847,11 @@ function tinhTrangThaiHoSo(d: {
       chiTiet: `Thiếu: ${thieu.join(", ")}`,
     };
   }
+  
   if (
     d.CccdTrangThai === "DU" &&
     d.GiayKhamTrangThai === "DU" &&
     (d.DonHocTrangThai === "DU" || d.DonHocTrangThai === "KHONG_CAN") &&
-    (d.HopDongTrangThai === "DU" || d.HopDongTrangThai === "KHONG_CAN") &&
-    (d.Hinh1MTrangThai === "DU" || d.Hinh1MTrangThai === "KHONG_CAN") &&
     (d.BangKhaiTrangThai === "DU" || d.BangKhaiTrangThai === "KHONG_CAN")
   ) {
     return {
@@ -861,6 +859,7 @@ function tinhTrangThaiHoSo(d: {
       chiTiet: "Hồ sơ hoàn thiện đầy đủ",
     };
   }
+  
   return {
     trangThai: "CHUA_KIEM" as const,
     chiTiet: "Chưa kiểm tra đầy đủ",
