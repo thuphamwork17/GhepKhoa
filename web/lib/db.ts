@@ -168,7 +168,7 @@ export async function mauVanBanCuaDonVi(donViId: number): Promise<string | null>
     { id: { kieu: sql.Int, gt: donViId } },
   );
   if (!r?.MauVanBan) return null;
-  return `D:GhepKhoa${r.MauVanBan}`;
+  return `D:\\GhepKhoa${r.MauVanBan}`;
 }
 
 /* ------------------------------------------------------------- hồ sơ -- */
