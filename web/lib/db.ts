@@ -623,6 +623,8 @@ export async function doiChieuMotHocVien(vao: {
   const hangMa = match[1];
   const soKhoa = parseInt(match[2], 10);
 
+  const hoTenLike = `%${hoTenCan.split(' ').join('%')}%`;
+
   // Fallback to DrivingManagement if not found
   let dsKhoa: any[] = [];
   const qTruong = `
@@ -639,11 +641,13 @@ export async function doiChieuMotHocVien(vao: {
     JOIN dbo.NguoiLX_HoSo h ON h.MaDK = n.MaDK
     JOIN dbo.KhoaHoc k ON k.MaKH = h.MaKhoaHoc
     WHERE (REPLACE(k.TenKH, ' ', '') = @mau1
-       OR REPLACE(k.TenKH, ' ', '') LIKE @mau2);
+       OR REPLACE(k.TenKH, ' ', '') LIKE @mau2)
+      AND n.HoVaTen COLLATE Latin1_General_CI_AI LIKE @hoTenLike COLLATE Latin1_General_CI_AI;
   `;
   const paramsTruong = {
     mau1: { kieu: sql.NVarChar, gt: `${hangMa}KHÓA${soKhoa}` },
-    mau2: { kieu: sql.NVarChar, gt: `${hangMa}KHÓA${soKhoa}/%` }
+    mau2: { kieu: sql.NVarChar, gt: `${hangMa}KHÓA${soKhoa}/%` },
+    hoTenLike: { kieu: sql.NVarChar, gt: hoTenLike }
   };
 
   try {
@@ -671,19 +675,21 @@ export async function doiChieuMotHocVien(vao: {
       JOIN dbo.DonVi dv     ON dv.DonViId  = k.DonViId
       WHERE dv.MaCoSo = @maCS
         AND k.HangMa  = @hangMa
-        AND k.SoKhoa  = @soKhoa;
+        AND k.SoKhoa  = @soKhoa
+        AND hv.HoTen COLLATE Latin1_General_CI_AI LIKE @hoTenLike COLLATE Latin1_General_CI_AI;
     `;
     try {
       dsKhoa = await truyVan(qDm, { 
         maCS: { kieu: sql.VarChar, gt: maCoSo },
         hangMa: { kieu: sql.VarChar, gt: hangMa },
-        soKhoa: { kieu: sql.Int, gt: soKhoa }
+        soKhoa: { kieu: sql.Int, gt: soKhoa },
+        hoTenLike: { kieu: sql.NVarChar, gt: hoTenLike }
       });
     } catch(e) {}
   }
 
   if (dsKhoa.length === 0) {
-    return { ok: false, ma: "KHONG_CO_KHOA", thongBao: `Không có dữ liệu khóa ${maKhoaGoc} ở cơ sở ${maCoSo}.` };
+    return { ok: false, ma: "KHONG_TIM_THAY", thongBao: `Không tìm thấy học viên trong khóa ${maKhoaGoc} ở cơ sở ${maCoSo}.` };
   }
 
   const boDau = (s: string) => s.normalize("NFD").replace(/[u0300-u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toUpperCase().trim();
