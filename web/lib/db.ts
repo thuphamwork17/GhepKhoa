@@ -647,7 +647,8 @@ export async function doiChieuMotHocVien(vao: {
     FROM dbo.NguoiLX n
     JOIN dbo.NguoiLX_HoSo h ON h.MaDK = n.MaDK
     JOIN dbo.KhoaHoc k ON k.MaKH = h.MaKhoaHoc
-    WHERE (REPLACE(k.TenKH, ' ', '') = @mau1
+    WHERE k.HangGPLX = @hangGplx
+      AND (REPLACE(k.TenKH, ' ', '') = @mau1
        OR REPLACE(k.TenKH, ' ', '') LIKE @mau2)
       AND n.HoVaTen COLLATE Latin1_General_CI_AI LIKE @hoTenLike COLLATE Latin1_General_CI_AI;
   `;
@@ -665,12 +666,14 @@ export async function doiChieuMotHocVien(vao: {
     FROM dbo.NguoiLX n
     JOIN dbo.NguoiLX_HoSo h ON h.MaDK = n.MaDK
     JOIN dbo.KhoaHoc k ON k.MaKH = h.MaKhoaHoc
-    WHERE (REPLACE(k.TenKH, ' ', '') = @mau1
+    WHERE k.HangGPLX = @hangGplx
+      AND (REPLACE(k.TenKH, ' ', '') = @mau1
        OR REPLACE(k.TenKH, ' ', '') LIKE @mau2);
   `;
   const paramsMau = {
     mau1: { kieu: sql.NVarChar, gt: `${hangMa}KHÓA${soKhoa}` },
     mau2: { kieu: sql.NVarChar, gt: `${hangMa}KHÓA${soKhoa}/%` },
+    hangGplx: { kieu: sql.VarChar, gt: hangMa },
   };
   const paramsNhanh = {
     ...paramsMau,
@@ -806,9 +809,10 @@ export async function doiChieuMotHocVien(vao: {
     DECLARE @hv int = (SELECT HocVienId FROM dbo.HocVien WHERE Cccd = @cccd);
 
     MERGE dbo.HocVienKhoa AS t
-    USING (SELECT @k AS KhoaId, @hv AS HocVienId, @maHV AS MaHocVien) AS n
+    USING (SELECT @k AS KhoaId, @hv AS HocVienId,
+                  NULLIF(@maHV, '') AS MaHocVien) AS n
        ON t.KhoaId=n.KhoaId AND t.HocVienId=n.HocVienId
-    WHEN MATCHED THEN UPDATE SET MaHocVien=n.MaHocVien, CapNhatLuc=SYSDATETIMEOFFSET()
+    WHEN MATCHED AND n.MaHocVien IS NOT NULL THEN UPDATE SET MaHocVien=n.MaHocVien, CapNhatLuc=SYSDATETIMEOFFSET()
     WHEN NOT MATCHED THEN INSERT (KhoaId,HocVienId,MaHocVien,KetQuaTotNghiep)
          VALUES (n.KhoaId,n.HocVienId,n.MaHocVien,'VANG_THI');
     DECLARE @hvk int = (SELECT HocVienKhoaId FROM dbo.HocVienKhoa WHERE KhoaId=@k AND HocVienId=@hv);
