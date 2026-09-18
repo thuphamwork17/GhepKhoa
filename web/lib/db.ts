@@ -627,9 +627,32 @@ export async function doiChieuMotHocVien(vao: {
 
   // Fallback to DrivingManagement if not found
   let dsKhoa: any[] = [];
-  // Lưu ý: KHÔNG lọc HoTen trong SQL vì COLLATE tiếng Việt không đáng tin cậy
-  // khi tên có dấu khác encoding. Lọc tên ở tầng JS (bên dưới) an toàn hơn.
-  const qTruong = `
+  // Lấy chữ cuối cùng của tên (chữ "tên" trong tên Việt Nam - đặc trưng nhất)
+  // để lọc trong SQL, giảm số bản ghi trả về. Nếu lọc này không khớp do
+  // encoding tiếng Việt khác nhau giữa client và DB, sẽ fallback lấy cả khóa.
+  const tenCuoi = hoTenCan.split(' ').pop() ?? hoTenCan;
+  const hoTenLikeSql = `%${tenCuoi}%`;
+
+  // Query tìm theo khóa + tên (nhanh)
+  const qTruongNhanh = `
+    SET NOCOUNT ON;
+    SELECT n.HoVaTen, 
+           RIGHT(n.NgaySinh,2) + '/' + SUBSTRING(n.NgaySinh,5,2) + '/' + LEFT(n.NgaySinh,4) AS NgaySinh,
+           ISNULL(n.SoCMT, '') AS Cccd,
+           ISNULL(n.NoiCT, '') AS DiaChi,
+           ISNULL(h.HangGPLXDaCo, '') AS HangGplx,
+           ISNULL(h.SoGPLXDaCo, '') AS SoGplx,
+           ISNULL(h.SoBD, '') AS MaHocVien,
+           ISNULL(CONVERT(varchar(10), k.NgayBG, 120), '') AS NgayBeGiang
+    FROM dbo.NguoiLX n
+    JOIN dbo.NguoiLX_HoSo h ON h.MaDK = n.MaDK
+    JOIN dbo.KhoaHoc k ON k.MaKH = h.MaKhoaHoc
+    WHERE (REPLACE(k.TenKH, ' ', '') = @mau1
+       OR REPLACE(k.TenKH, ' ', '') LIKE @mau2)
+      AND n.HoVaTen COLLATE Latin1_General_CI_AI LIKE @hoTenLike COLLATE Latin1_General_CI_AI;
+  `;
+  // Query dự phòng: lấy toàn bộ khóa nếu lọc tên không ra (encoding khác)
+  const qTruongDuPhong = `
     SET NOCOUNT ON;
     SELECT n.HoVaTen, 
            RIGHT(n.NgaySinh,2) + '/' + SUBSTRING(n.NgaySinh,5,2) + '/' + LEFT(n.NgaySinh,4) AS NgaySinh,
@@ -645,20 +668,33 @@ export async function doiChieuMotHocVien(vao: {
     WHERE (REPLACE(k.TenKH, ' ', '') = @mau1
        OR REPLACE(k.TenKH, ' ', '') LIKE @mau2);
   `;
-  const paramsTruong = {
+  const paramsMau = {
     mau1: { kieu: sql.NVarChar, gt: `${hangMa}KHÓA${soKhoa}` },
     mau2: { kieu: sql.NVarChar, gt: `${hangMa}KHÓA${soKhoa}/%` },
+  };
+  const paramsNhanh = {
+    ...paramsMau,
+    hoTenLike: { kieu: sql.NVarChar, gt: hoTenLikeSql },
   };
 
   try {
     if (maCoSo === "92004") {
-      dsKhoa = await truyVanTrungTam(qTruong, paramsTruong);
+      // Thử tìm nhanh theo khóa + tên trước
+      dsKhoa = await truyVanTrungTam(qTruongNhanh, paramsNhanh);
+      // Nếu không ra (có thể do encoding) thì lấy cả khóa
+      if (dsKhoa.length === 0) {
+        dsKhoa = await truyVanTrungTam(qTruongDuPhong, paramsMau);
+      }
     } else {
-      dsKhoa = await truyVanTruong(qTruong, paramsTruong);
+      dsKhoa = await truyVanTruong(qTruongNhanh, paramsNhanh);
+      if (dsKhoa.length === 0) {
+        dsKhoa = await truyVanTruong(qTruongDuPhong, paramsMau);
+      }
     }
   } catch(e) {}
 
   if (dsKhoa.length === 0) {
+    // Fallback: tìm trong CSDL web (DrivingManagement)
     const qDm = `
       SET NOCOUNT ON;
       SELECT hv.HoTen AS HoVaTen,
