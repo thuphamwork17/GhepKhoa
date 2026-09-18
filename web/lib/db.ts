@@ -627,14 +627,19 @@ export async function doiChieuMotHocVien(vao: {
 
   // Fallback to DrivingManagement if not found
   let dsKhoa: any[] = [];
-  // Lấy chữ cuối cùng của tên (chữ "tên" trong tên Việt Nam - đặc trưng nhất)
-  // để lọc trong SQL, giảm số bản ghi trả về. Nếu lọc này không khớp do
-  // encoding tiếng Việt khác nhau giữa client và DB, sẽ fallback lấy cả khóa.
   const tenCuoi = hoTenCan.split(' ').pop() ?? hoTenCan;
   const hoTenLikeSql = `%${tenCuoi}%`;
 
-  // Query tìm theo khóa + tên (nhanh)
-  const qTruongNhanh = `
+  const qKhoaHoc = `
+    SET NOCOUNT ON;
+    SELECT MaKH, ISNULL(CONVERT(varchar(10), NgayBG, 120), '') AS NgayBeGiang
+    FROM dbo.KhoaHoc
+    WHERE HangGPLX = @hangGplx
+      AND (REPLACE(TenKH, ' ', '') = @mau1
+       OR REPLACE(TenKH, ' ', '') LIKE @mau2);
+  `;
+
+  const qHocVienNhanh = `
     SET NOCOUNT ON;
     SELECT n.HoVaTen, 
            RIGHT(n.NgaySinh,2) + '/' + SUBSTRING(n.NgaySinh,5,2) + '/' + LEFT(n.NgaySinh,4) AS NgaySinh,
@@ -643,17 +648,14 @@ export async function doiChieuMotHocVien(vao: {
            ISNULL(h.HangGPLXDaCo, '') AS HangGplx,
            ISNULL(h.SoGPLXDaCo, '') AS SoGplx,
            ISNULL(h.SoBD, '') AS MaHocVien,
-           ISNULL(CONVERT(varchar(10), k.NgayBG, 120), '') AS NgayBeGiang
+           @ngayBG AS NgayBeGiang
     FROM dbo.NguoiLX n
     JOIN dbo.NguoiLX_HoSo h ON h.MaDK = n.MaDK
-    JOIN dbo.KhoaHoc k ON k.MaKH = h.MaKhoaHoc
-    WHERE k.HangGPLX = @hangGplx
-      AND (REPLACE(k.TenKH, ' ', '') = @mau1
-       OR REPLACE(k.TenKH, ' ', '') LIKE @mau2)
+    WHERE h.MaKhoaHoc = @maKH
       AND n.HoVaTen COLLATE Latin1_General_CI_AI LIKE @hoTenLike COLLATE Latin1_General_CI_AI;
   `;
-  // Query dự phòng: lấy toàn bộ khóa nếu lọc tên không ra (encoding khác)
-  const qTruongDuPhong = `
+
+  const qHocVienDuPhong = `
     SET NOCOUNT ON;
     SELECT n.HoVaTen, 
            RIGHT(n.NgaySinh,2) + '/' + SUBSTRING(n.NgaySinh,5,2) + '/' + LEFT(n.NgaySinh,4) AS NgaySinh,
@@ -662,39 +664,48 @@ export async function doiChieuMotHocVien(vao: {
            ISNULL(h.HangGPLXDaCo, '') AS HangGplx,
            ISNULL(h.SoGPLXDaCo, '') AS SoGplx,
            ISNULL(h.SoBD, '') AS MaHocVien,
-           ISNULL(CONVERT(varchar(10), k.NgayBG, 120), '') AS NgayBeGiang
+           @ngayBG AS NgayBeGiang
     FROM dbo.NguoiLX n
     JOIN dbo.NguoiLX_HoSo h ON h.MaDK = n.MaDK
-    JOIN dbo.KhoaHoc k ON k.MaKH = h.MaKhoaHoc
-    WHERE k.HangGPLX = @hangGplx
-      AND (REPLACE(k.TenKH, ' ', '') = @mau1
-       OR REPLACE(k.TenKH, ' ', '') LIKE @mau2);
+    WHERE h.MaKhoaHoc = @maKH;
   `;
+
   const paramsMau = {
     mau1: { kieu: sql.NVarChar, gt: `${hangMa}KHÓA${soKhoa}` },
     mau2: { kieu: sql.NVarChar, gt: `${hangMa}KHÓA${soKhoa}/%` },
     hangGplx: { kieu: sql.VarChar, gt: hangMa },
   };
-  const paramsNhanh = {
-    ...paramsMau,
-    hoTenLike: { kieu: sql.NVarChar, gt: hoTenLikeSql },
-  };
 
   try {
-    if (maCoSo === "92004") {
-      // Thử tìm nhanh theo khóa + tên trước
-      dsKhoa = await truyVanTrungTam(qTruongNhanh, paramsNhanh);
-      // Nếu không ra (có thể do encoding) thì lấy cả khóa
+    const truyVanFn = maCoSo === "92004" ? truyVanTrungTam : truyVanTruong;
+    
+    // Bước 1: Lấy Mã Khóa Học (MaKH)
+    const listKhoaHoc = await truyVanFn(qKhoaHoc, paramsMau);
+    
+    if (listKhoaHoc && listKhoaHoc.length > 0) {
+      const maKH = listKhoaHoc[0].MaKH;
+      const ngayBG = listKhoaHoc[0].NgayBeGiang;
+
+      const paramsHocVienNhanh = {
+        maKH: { kieu: sql.VarChar, gt: maKH },
+        ngayBG: { kieu: sql.VarChar, gt: ngayBG },
+        hoTenLike: { kieu: sql.NVarChar, gt: hoTenLikeSql },
+      };
+
+      // Bước 2: Lấy học viên của khóa
+      dsKhoa = await truyVanFn(qHocVienNhanh, paramsHocVienNhanh);
+
       if (dsKhoa.length === 0) {
-        dsKhoa = await truyVanTrungTam(qTruongDuPhong, paramsMau);
-      }
-    } else {
-      dsKhoa = await truyVanTruong(qTruongNhanh, paramsNhanh);
-      if (dsKhoa.length === 0) {
-        dsKhoa = await truyVanTruong(qTruongDuPhong, paramsMau);
+        const paramsHocVienDuPhong = {
+          maKH: { kieu: sql.VarChar, gt: maKH },
+          ngayBG: { kieu: sql.VarChar, gt: ngayBG },
+        };
+        dsKhoa = await truyVanFn(qHocVienDuPhong, paramsHocVienDuPhong);
       }
     }
-  } catch(e) {}
+  } catch (e) {
+    console.error("Lỗi 2-step truy vấn học viên:", e);
+  }
 
   if (dsKhoa.length === 0) {
     // Fallback: tìm trong CSDL web (DrivingManagement)
