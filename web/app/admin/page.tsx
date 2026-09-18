@@ -148,36 +148,69 @@ export default async function Trang({
         ))}
       </div>
 
-      <nav className="mt-6 flex flex-wrap gap-2 text-[13px]">
-        <Link
-          href="/admin"
-          className={`rounded-full border px-3.5 py-1.5 transition ${
-            !dotHopLe
-              ? "border-[#0b5590] bg-[#0b5590] font-medium text-white"
-              : "border-[#c8d2e0] text-[#4a5666] hover:bg-[#eaf2f9]"
-          }`}
-        >
-          Tất cả đợt
-        </Link>
-        {dots.map((d) => (
+      <div className="mt-6">
+        {/* Các đợt đang mở */}
+        <div className="flex flex-wrap gap-2 text-[13px]">
           <Link
-            key={d.DotId}
-            href={`/admin?dot=${d.DotId}`}
-            className={`rounded-full border px-3.5 py-1.5 transition ${
-              dotHopLe === d.DotId
-                ? "border-[#0b5590] bg-[#0b5590] font-medium text-white"
-                : "border-[#c8d2e0] text-[#4a5666] hover:bg-[#eaf2f9]"
+            href="/admin"
+            className={`rounded-full border px-3.5 py-1.5 transition flex items-center ${
+              !dotHopLe
+                ? "border-[#0b5590] bg-[#0b5590] font-medium text-white shadow-sm"
+                : "border-[#c8d2e0] text-[#17202e] bg-white hover:bg-[#eaf2f9] shadow-sm font-medium"
             }`}
           >
-            {pv === undefined && (
-              <span className="mr-1 text-[11px] opacity-70">
-                {d.TenVietTat}
-              </span>
-            )}
-            {d.MaKhoaDich} · {ngayVN(d.NgayThi)} ({d.SoDangKy})
+            Tất cả đợt
           </Link>
-        ))}
-      </nav>
+          {dots.filter(d => ngayISO(d.NgayThi) >= homNay || dotHopLe === d.DotId).map((d) => {
+            const isSelected = dotHopLe === d.DotId;
+            return (
+              <Link
+                key={d.DotId}
+                href={`/admin?dot=${d.DotId}`}
+                className={`rounded-full border px-3.5 py-1.5 transition flex items-center ${
+                  isSelected 
+                    ? "border-[#0b5590] bg-[#0b5590] font-medium text-white shadow-sm" 
+                    : "border-[#c8d2e0] text-[#17202e] bg-white hover:bg-[#eaf2f9] shadow-sm font-medium"
+                }`}
+                title="Đợt đang mở"
+              >
+                {pv === undefined && (
+                  <span className="mr-1 opacity-70 text-[11px]">{d.TenVietTat}</span>
+                )}
+                {d.MaKhoaDich} · {ngayVN(d.NgayThi)} ({d.SoDangKy})
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Các đợt đã qua (Gom gọn) */}
+        {dots.some(d => ngayISO(d.NgayThi) < homNay && dotHopLe !== d.DotId) && (
+          <details className="group mt-3">
+            <summary className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-[13px] font-medium text-slate-600 shadow-sm hover:bg-slate-50 cursor-pointer list-none select-none transition-all outline-hidden [&::-webkit-details-marker]:hidden">
+              <svg className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+              Xem {dots.filter(d => ngayISO(d.NgayThi) < homNay && dotHopLe !== d.DotId).length} đợt đã thi
+            </summary>
+            
+            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3 shadow-inner">
+              <div className="flex flex-wrap gap-2 text-[13px]">
+                {dots.filter(d => ngayISO(d.NgayThi) < homNay && dotHopLe !== d.DotId).map((d) => (
+                  <Link
+                    key={d.DotId}
+                    href={`/admin?dot=${d.DotId}`}
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[12px] text-slate-500 shadow-sm transition hover:border-[#0b5590] hover:text-[#0b5590] hover:shadow-md"
+                    title="Đợt đã thi"
+                  >
+                    {pv === undefined && (
+                      <span className="mr-1 opacity-70 text-[10px]">{d.TenVietTat}</span>
+                    )}
+                    {d.MaKhoaDich} · {ngayVN(d.NgayThi)} ({d.SoDangKy})
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </details>
+        )}
+      </div>
 
       <section className="the mt-5 overflow-x-auto">
         <table className="w-full text-[14px]">

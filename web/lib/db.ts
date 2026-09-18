@@ -372,9 +372,9 @@ export async function thongKeHoSo(opt: { donViId?: number | null; maKhoa?: strin
   }>(
     `SELECT 
       COUNT(*) AS Tong,
-      SUM(CASE WHEN TrangThaiHoSo = 'DU' THEN 1 ELSE 0 END) AS SoDu,
-      SUM(CASE WHEN TrangThaiHoSo = 'THIEU' THEN 1 ELSE 0 END) AS SoThieu,
-      SUM(CASE WHEN TrangThaiHoSo = 'CHUA_KIEM' THEN 1 ELSE 0 END) AS SoChuaKiem
+      ISNULL(SUM(CASE WHEN TrangThaiHoSo = 'DU' THEN 1 ELSE 0 END), 0) AS SoDu,
+      ISNULL(SUM(CASE WHEN TrangThaiHoSo = 'THIEU' THEN 1 ELSE 0 END), 0) AS SoThieu,
+      ISNULL(SUM(CASE WHEN TrangThaiHoSo = 'CHUA_KIEM' THEN 1 ELSE 0 END), 0) AS SoChuaKiem
     FROM dbo.HoSoHocVien ${where}`,
     ts
   );

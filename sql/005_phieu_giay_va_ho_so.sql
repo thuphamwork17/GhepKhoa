@@ -28,6 +28,9 @@ GO
 IF EXISTS (SELECT 1 FROM sys.key_constraints WHERE name = 'UQ_DK_Dot_Cccd')
   ALTER TABLE dbo.DangKyGhepKhoa DROP CONSTRAINT UQ_DK_Dot_Cccd;
 GO
+IF EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'UX_DK_Dot_Cccd' AND object_id = OBJECT_ID('dbo.DangKyGhepKhoa'))
+  DROP INDEX UX_DK_Dot_Cccd ON dbo.DangKyGhepKhoa;
+GO
 
 ALTER TABLE dbo.DangKyGhepKhoa ALTER COLUMN CccdKhai     varchar(12) NULL;
 GO
