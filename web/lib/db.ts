@@ -740,7 +740,7 @@ export async function doiChieuMotHocVien(vao: {
     return { ok: false, ma: "KHONG_CO_KHOA", thongBao: `Không có dữ liệu khóa ${maKhoaGoc} ở cơ sở ${maCoSo}.` };
   }
 
-  const boDau = (s: string) => s.normalize("NFD").replace(/[u0300-u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toUpperCase().trim();
+  const boDau = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toUpperCase().trim();
   const tenCan = boDau(hoTenCan);
 
   let ungVien = dsKhoa.filter(x => boDau(x.HoVaTen) === tenCan);
