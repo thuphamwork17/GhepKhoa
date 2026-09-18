@@ -4,9 +4,12 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import type { ThongKeKhoa } from "@/lib/db";
 
 function rutGonMaKhoa(ma: string) {
-  // Trích xuất "K26D" từ "92004K26D2030"
-  const m = ma.match(/K\d+[A-Z]*/i);
-  return m ? m[0] : ma;
+  // Trích xuất "K26D-2030" từ "92004K26D2030"
+  const m = ma.match(/(K\d+[A-Z]*)(\d*)/i);
+  if (m) {
+    return m[2] ? `${m[1]}-${m[2]}` : m[1];
+  }
+  return ma;
 }
 
 export default function DanhSachKhoa({

@@ -15,6 +15,7 @@ jobs:
         run: |
           d:
           cd D:\GhepKhoa
+          git config --global --add safe.directory D:/GhepKhoa
           git fetch --all
           git reset --hard origin/main
           cd web

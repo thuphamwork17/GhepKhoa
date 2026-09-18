@@ -532,7 +532,7 @@ async function dongBoKhoaGPLX(maKhoa: string) {
 
 function maKhoaTuTenKH(tenKH: string): string {
   if (!tenKH) return "";
-  const match = tenKH.match(/^s*([A-Za-zĐđ()]+)s*(?:KHÓA|KHOÁ)s*(d+)/i);
+  const match = tenKH.match(/^\s*([A-Za-zĐđ()]+)\s*(?:KHÓA|KHOÁ)\s*(\d+)/i);
   if (match) {
     const ma = `${match[1]}K${match[2]}`.toUpperCase().replace(/Đ/g, 'D');
     return chuanHoaMaKhoa(ma);
@@ -618,7 +618,7 @@ export async function doiChieuMotHocVien(vao: {
   }
 
   // 1. Fetch entire course from appropriate DB to match exactly how python _nap_ds_khoa worked
-  const match = maKhoaGoc.match(/^([A-ZĐ0-9-]+)K(d+)$/);
+  const match = maKhoaGoc.match(/^([A-ZĐ0-9-]+)K(\d+)$/);
   if (!match) return { ok: false, ma: "LOI", thongBao: `Không tách được mã khóa '${maKhoaGoc}'.` };
   const hangMa = match[1];
   const soKhoa = parseInt(match[2], 10);
