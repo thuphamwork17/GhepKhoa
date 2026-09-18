@@ -3,6 +3,12 @@
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import type { ThongKeKhoa } from "@/lib/db";
 
+function rutGonMaKhoa(ma: string) {
+  // Trích xuất "K26D" từ "92004K26D2030"
+  const m = ma.match(/K\d+[A-Z]*/i);
+  return m ? m[0] : ma;
+}
+
 export default function DanhSachKhoa({
   danhSachKhoa,
 }: {
@@ -43,63 +49,59 @@ export default function DanhSachKhoa({
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {danhSachKhoa.map((k) => {
-        const tileDu = k.TongSo > 0 ? ((k.SoDu / k.TongSo) * 100).toFixed(1) : "0";
+        const tileDu = k.TongSo > 0 ? ((k.SoDu / k.TongSo) * 100).toFixed(0) : "0";
+        const tenKhoaNgan = rutGonMaKhoa(k.MaKhoa);
         
         return (
           <button
             key={k.MaKhoa}
             onClick={() => handleClick(k.MaKhoa)}
-            className="group flex flex-col items-start justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-xs transition-all hover:border-[#0b5590] hover:shadow-md text-left"
+            className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 shadow-xs transition-all hover:border-[#0b5590] hover:shadow-md text-left"
           >
-            {/* Header Thẻ */}
-            <div className="w-full flex items-start justify-between border-b border-slate-100 pb-3 mb-3">
-              <div>
-                <div className="text-[18px] font-bold tracking-tight text-slate-900 group-hover:text-[#0b5590] transition-colors">
-                  {k.MaKhoa}
+            <div>
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="text-[20px] font-bold tracking-tight text-slate-900 group-hover:text-[#0b5590] transition-colors">
+                    Khóa {tenKhoaNgan}
+                  </div>
+                  <div className="text-[12px] text-slate-400 font-mono mt-0.5">
+                    {k.MaKhoa}
+                  </div>
                 </div>
-                <div className="mt-1 flex items-center gap-2">
-                  <span className="rounded bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 border border-blue-200">
-                    Hạng {k.HangMa}
-                  </span>
-                  <span className="text-[12px] text-slate-500 font-medium">
-                    {k.TongSo} học viên
-                  </span>
+                <div className="rounded-full bg-slate-50 p-2 text-slate-400 group-hover:bg-blue-50 group-hover:text-[#0b5590] transition-colors">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
                 </div>
               </div>
-              <div className="rounded-full bg-slate-50 p-2 text-slate-400 group-hover:bg-blue-50 group-hover:text-[#0b5590] transition-colors">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                </svg>
+              
+              <div className="mt-3 flex items-center gap-2">
+                <span className="rounded bg-blue-50 px-2 py-0.5 text-[12px] font-semibold text-blue-700 border border-blue-200">
+                  Hạng {k.HangMa}
+                </span>
+                <span className="text-[13px] text-slate-500 font-medium">
+                  • {k.TongSo} học viên
+                </span>
               </div>
             </div>
 
-            {/* Thống kê nhỏ */}
-            <div className="w-full grid grid-cols-3 gap-2">
-              <div className="flex flex-col rounded-lg bg-emerald-50/50 p-2 border border-emerald-100/50">
-                <span className="text-[10px] font-semibold uppercase text-emerald-700/80">Đủ HS</span>
-                <span className="mt-0.5 text-[15px] font-bold text-emerald-700 font-mono">{k.SoDu}</span>
+            <div className="mt-5 border-t border-slate-100 pt-3 flex items-center justify-between">
+              <div className="flex gap-4">
+                <span className="flex items-center gap-1.5 text-[13px] font-semibold text-emerald-600" title="Đủ hồ sơ">
+                  <span className="size-2 rounded-full bg-emerald-500"></span>
+                  {k.SoDu}
+                </span>
+                <span className="flex items-center gap-1.5 text-[13px] font-semibold text-rose-600" title="Thiếu giấy tờ">
+                  <span className="size-2 rounded-full bg-rose-500"></span>
+                  {k.SoThieu}
+                </span>
+                <span className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-400" title="Chưa kiểm tra">
+                  <span className="size-2 rounded-full bg-slate-300"></span>
+                  {k.SoChuaKiem}
+                </span>
               </div>
-              <div className="flex flex-col rounded-lg bg-rose-50/50 p-2 border border-rose-100/50">
-                <span className="text-[10px] font-semibold uppercase text-rose-700/80">Thiếu</span>
-                <span className="mt-0.5 text-[15px] font-bold text-rose-700 font-mono">{k.SoThieu}</span>
-              </div>
-              <div className="flex flex-col rounded-lg bg-slate-50 p-2 border border-slate-100">
-                <span className="text-[10px] font-semibold uppercase text-slate-500">Chưa kiểm</span>
-                <span className="mt-0.5 text-[15px] font-bold text-slate-700 font-mono">{k.SoChuaKiem}</span>
-              </div>
-            </div>
-
-            {/* Thanh tiến độ */}
-            <div className="mt-4 w-full">
-              <div className="flex justify-between text-[10px] font-medium text-slate-500 mb-1.5">
-                <span>Tiến độ hoàn thiện hồ sơ</span>
-                <span className="text-emerald-700 font-semibold">{tileDu}%</span>
-              </div>
-              <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
-                <div 
-                  className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                  style={{ width: `${tileDu}%` }}
-                />
+              <div className="text-[12px] font-semibold text-slate-400">
+                {tileDu}%
               </div>
             </div>
           </button>

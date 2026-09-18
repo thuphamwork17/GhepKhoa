@@ -396,7 +396,7 @@ export type ThongKeKhoa = {
 };
 
 export async function thongKeCacKhoa(opt: { donViId?: number | null } = {}) {
-  const qGPLX = `SELECT MaKH AS MaKhoa, HangGPLX AS HangMa, ISNULL(TongSoHV, 0) AS TongSoGPLX FROM dbo.KhoaHoc WHERE YEAR(NgayBG) >= YEAR(GETDATE())`;
+  const qGPLX = `SELECT MaKH AS MaKhoa, HangGPLX AS HangMa, ISNULL(TongSoHV, 0) AS TongSoGPLX FROM dbo.KhoaHoc WHERE YEAR(NgayBG) >= YEAR(GETDATE()) AND HangGPLX NOT IN ('A1', 'A01', 'A02')`;
 
   const [khoaTruong, khoaTrungTam, statsWeb] = await Promise.all([
     truyVanTruong<{ MaKhoa: string; HangMa: string; TongSoGPLX: number }>(qGPLX),
