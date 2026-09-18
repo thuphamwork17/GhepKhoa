@@ -21,8 +21,9 @@ export async function goiPython<T = Record<string, unknown>>(
   thoiGianToiDaMs = 120_000,
 ): Promise<KetQuaPython<T>> {
   return new Promise((resolve) => {
+    const lenhPython = process.env.PYTHON_PATH || "python";
     execFile(
-      "python",
+      lenhPython,
       ["-m", "ghepkhoa", lenh, "--json", JSON.stringify(thamSo)],
       {
         cwd: THU_MUC_TOOLS,
