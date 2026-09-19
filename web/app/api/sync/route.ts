@@ -21,9 +21,33 @@ export async function POST(request: Request) {
     await transaction.begin();
 
     try {
-      // 1. Xóa bảng cũ (Dùng DELETE thay vì TRUNCATE để tránh lỗi phân quyền)
-      const reqTruncate = new sql.Request(transaction);
-      await reqTruncate.query('DELETE FROM dbo.Sync_HocVien');
+      // 1. Tạo bảng nếu chưa có, sau đó xóa dữ liệu cũ (Dùng DELETE thay vì TRUNCATE để tránh lỗi phân quyền)
+      const reqInit = new sql.Request(transaction);
+      await reqInit.query(`
+        IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[Sync_HocVien]') AND type in (N'U'))
+        BEGIN
+          CREATE TABLE [dbo].[Sync_HocVien](
+            [MaDK] [varchar](50) NULL,
+            [MaCoSo] [varchar](10) NULL,
+            [HoVaTen] [nvarchar](100) NULL,
+            [NgaySinh] [varchar](20) NULL,
+            [Cccd] [varchar](20) NULL,
+            [DiaChi] [nvarchar](255) NULL,
+            [HangGplxDaCo] [varchar](20) NULL,
+            [SoGplxDaCo] [varchar](50) NULL,
+            [MaHocVien] [varchar](50) NULL,
+            [MaKH] [varchar](50) NULL,
+            [TenKH] [nvarchar](200) NULL,
+            [HangGPLX] [varchar](10) NULL,
+            [NgayBeGiang] [varchar](20) NULL,
+            [NgayDongBo] [datetime] NULL
+          )
+        END
+        ELSE
+        BEGIN
+          DELETE FROM dbo.Sync_HocVien
+        END
+      `);
 
       // 2. Chuẩn bị bảng Bulk
       const table = new sql.Table('Sync_HocVien');

@@ -632,8 +632,6 @@ export async function doiChieuMotHocVien(vao: {
 
   const paramsSync = {
     maCS: { kieu: sql.VarChar, gt: maCoSo },
-    mau1: { kieu: sql.NVarChar, gt: `${hangMa}KHÓA${soKhoa}` },
-    mau2: { kieu: sql.NVarChar, gt: `${hangMa}KHÓA${soKhoa}/%` },
     hoTenLike: { kieu: sql.NVarChar, gt: hoTenLikeSql },
   };
 
@@ -646,10 +644,11 @@ export async function doiChieuMotHocVien(vao: {
            HangGplxDaCo AS HangGplx,
            SoGplxDaCo AS SoGplx,
            MaHocVien,
-           NgayBeGiang
+           NgayBeGiang,
+           TenKH,
+           HangGPLX AS HangGplxGoc
     FROM dbo.Sync_HocVien
     WHERE MaCoSo = @maCS
-      AND (REPLACE(TenKH, ' ', '') = @mau1 OR REPLACE(TenKH, ' ', '') LIKE @mau2)
       AND HoVaTen COLLATE Latin1_General_CI_AI LIKE @hoTenLike COLLATE Latin1_General_CI_AI;
   `;
 
@@ -662,23 +661,32 @@ export async function doiChieuMotHocVien(vao: {
            HangGplxDaCo AS HangGplx,
            SoGplxDaCo AS SoGplx,
            MaHocVien,
-           NgayBeGiang
+           NgayBeGiang,
+           TenKH,
+           HangGPLX AS HangGplxGoc
     FROM dbo.Sync_HocVien
-    WHERE MaCoSo = @maCS
-      AND (REPLACE(TenKH, ' ', '') = @mau1 OR REPLACE(TenKH, ' ', '') LIKE @mau2);
+    WHERE MaCoSo = @maCS;
   `;
 
   try {
-    dsKhoa = await truyVan(qSyncNhanh, paramsSync);
+    const rawKhoa = await truyVan<any>(qSyncNhanh, paramsSync);
+    
+    // Lọc bằng logic an toàn trên TS thay vì REPLACE trong SQL (tránh lỗi font KHÓA/KHOÁ)
+    dsKhoa = rawKhoa.filter(r => {
+      // Nếu có HangGplxGoc, so sánh trực tiếp, nếu không thì tìm trong TenKH
+      const dungHang = r.HangGplxGoc ? r.HangGplxGoc.trim() === hangMa : r.TenKH?.includes(hangMa);
+      const dungKhoa = r.TenKH?.includes(soKhoa.toString());
+      return dungHang && dungKhoa;
+    });
     
     if (dsKhoa.length === 0) {
-      // Nếu không tìm thấy tên, lấy cả khóa
-      const paramsSyncAll = {
-        maCS: { kieu: sql.VarChar, gt: maCoSo },
-        mau1: { kieu: sql.NVarChar, gt: `${hangMa}KHÓA${soKhoa}` },
-        mau2: { kieu: sql.NVarChar, gt: `${hangMa}KHÓA${soKhoa}/%` }
-      };
-      dsKhoa = await truyVan(qSyncDuPhong, paramsSyncAll);
+      // Fallback lấy toàn bộ và lọc
+      const rawAll = await truyVan<any>(qSyncDuPhong, { maCS: { kieu: sql.VarChar, gt: maCoSo } });
+      dsKhoa = rawAll.filter(r => {
+        const dungHang = r.HangGplxGoc ? r.HangGplxGoc.trim() === hangMa : r.TenKH?.includes(hangMa);
+        const dungKhoa = r.TenKH?.includes(soKhoa.toString());
+        return dungHang && dungKhoa;
+      });
     }
   } catch (e) {
     console.error("Lỗi truy vấn Sync_HocVien:", e);
