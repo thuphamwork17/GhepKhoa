@@ -3,7 +3,7 @@ const sql = require('mssql/msnodesqlv8');
 
 // Đích (Web DB)
 const configWeb = {
-  server: 'thupham.id.vn', 
+  server: 'sql.thupham.id.vn', 
   database: 'DrivingManagement',
   user: 'sa', 
   password: '123456',
