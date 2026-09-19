@@ -21,9 +21,9 @@ export async function POST(request: Request) {
     await transaction.begin();
 
     try {
-      // 1. Truncate bảng cũ
+      // 1. Xóa bảng cũ (Dùng DELETE thay vì TRUNCATE để tránh lỗi phân quyền)
       const reqTruncate = new sql.Request(transaction);
-      await reqTruncate.query('TRUNCATE TABLE dbo.Sync_HocVien');
+      await reqTruncate.query('DELETE FROM dbo.Sync_HocVien');
 
       // 2. Chuẩn bị bảng Bulk
       const table = new sql.Table('Sync_HocVien');
@@ -63,8 +63,9 @@ export async function POST(request: Request) {
       await transaction.rollback();
       throw err;
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Lỗi API Sync:", error);
+    require('fs').writeFileSync('d:/GhepKhoa/web/public/sync_error.txt', error.stack || error.toString());
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
