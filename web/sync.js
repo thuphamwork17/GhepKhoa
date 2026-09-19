@@ -50,7 +50,6 @@ const qLayDuLieu = `
   FROM dbo.NguoiLX n
   JOIN dbo.NguoiLX_HoSo h ON h.MaDK = n.MaDK
   JOIN dbo.KhoaHoc k ON k.MaKH = h.MaKhoaHoc
-  WHERE k.NgayBG >= DATEADD(month, -12, GETDATE())
 `;
 
 async function runSync() {
