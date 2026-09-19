@@ -51,83 +51,60 @@ const qLayDuLieu = `
   JOIN dbo.NguoiLX_HoSo h ON h.MaDK = n.MaDK
   JOIN dbo.KhoaHoc k ON k.MaKH = h.MaKhoaHoc
   WHERE k.NgayBG >= DATEADD(month, -12, GETDATE())
-     OR k.NgayBG IS NULL;
 `;
 
-async function fetchFrom(config, ten, maCoSo) {
-  try {
-    const pool = await new sql.ConnectionPool(config).connect();
-    const rs = await pool.request().query(qLayDuLieu);
-    await pool.close();
-    console.log(`Đã lấy ${rs.recordset.length} hồ sơ từ máy chủ ${ten} (${maCoSo}).`);
-    return rs.recordset.map(row => ({ ...row, MaCoSo: maCoSo }));
-  } catch (err) {
-    console.error(`Lỗi kết nối máy chủ ${ten}:`, err.message);
-    return [];
-  }
-}
-
 async function runSync() {
-  console.log(`[${new Date().toISOString()}] Bắt đầu đồng bộ từ 2 máy chủ...`);
-  
-  const [dataTrungTam, dataTruong] = await Promise.all([
-    fetchFrom(configTrungTam, "Trung Tâm", "92004"),
-    fetchFrom(configTruong, "Trường", "92001")
-  ]);
+  const allData = [];
 
-  const allData = [...dataTrungTam, ...dataTruong];
-  if (allData.length === 0) {
-    console.log("Không có dữ liệu mới để đồng bộ.");
-    return;
-  }
-
-  let poolWeb;
   try {
-    poolWeb = await sql.connect(configWeb);
-    const transaction = new sql.Transaction(poolWeb);
-    await transaction.begin();
+    console.log(`[${new Date().toISOString()}] Bắt đầu đồng bộ từ 2 máy chủ...`);
+    
+    // Lấy dữ liệu Trường
     try {
-      const reqDelete = new sql.Request(transaction);
-      await reqDelete.query('TRUNCATE TABLE Sync_HocVien');
-      
-      const table = new sql.Table('Sync_HocVien');
-      table.create = false;
-      table.columns.add('MaDK', sql.VarChar(50), { nullable: false }); // Primary Key logic will be handled by DB
-      table.columns.add('MaCoSo', sql.VarChar(10), { nullable: false });
-      table.columns.add('HoVaTen', sql.NVarChar(255), { nullable: true });
-      table.columns.add('NgaySinh', sql.VarChar(20), { nullable: true });
-      table.columns.add('Cccd', sql.VarChar(50), { nullable: true });
-      table.columns.add('DiaChi', sql.NVarChar(500), { nullable: true });
-      table.columns.add('HangGplxDaCo', sql.VarChar(20), { nullable: true });
-      table.columns.add('SoGplxDaCo', sql.VarChar(50), { nullable: true });
-      table.columns.add('MaHocVien', sql.VarChar(100), { nullable: true });
-      table.columns.add('MaKH', sql.VarChar(50), { nullable: true });
-      table.columns.add('TenKH', sql.NVarChar(255), { nullable: true });
-      table.columns.add('HangGPLX', sql.VarChar(20), { nullable: true });
-      table.columns.add('NgayBeGiang', sql.VarChar(20), { nullable: true });
-      table.columns.add('LastSync', sql.DateTime, { nullable: true });
-      
-      const now = new Date();
-      for (const row of allData) {
-        table.rows.add(
-          row.MaDK, row.MaCoSo, row.HoVaTen, row.NgaySinh, row.Cccd, row.DiaChi, 
-          row.HangGplxDaCo, row.SoGplxDaCo, row.MaHocVien, row.MaKH, 
-          row.TenKH, row.HangGPLX, row.NgayBeGiang, now
-        );
-      }
-      
-      const reqInsert = new sql.Request(transaction);
-      await reqInsert.bulk(table);
-      await transaction.commit();
-      console.log(`Đã ghi thành công tổng cộng ${allData.length} hồ sơ vào DB Web.`);
-    } catch (err) {
-      await transaction.rollback();
-      throw err;
+      const poolTruong = await new sql.ConnectionPool(configTruong).connect();
+      const resultTruong = await poolTruong.request().query(qLayDuLieu);
+      resultTruong.recordset.forEach(r => { r.MaCoSo = '92001'; allData.push(r); });
+      console.log(`Đã lấy ${resultTruong.recordset.length} hồ sơ từ máy chủ Trường (92001).`);
+      await poolTruong.close();
+    } catch (e) {
+      console.error(`Lỗi kết nối máy chủ Trường: ${e.message}`);
+    }
+
+    // Lấy dữ liệu Trung Tâm
+    try {
+      const poolTrungTam = await new sql.ConnectionPool(configTrungTam).connect();
+      const resultTrungTam = await poolTrungTam.request().query(qLayDuLieu);
+      resultTrungTam.recordset.forEach(r => { r.MaCoSo = '92004'; allData.push(r); });
+      console.log(`Đã lấy ${resultTrungTam.recordset.length} hồ sơ từ máy chủ Trung Tâm (92004).`);
+      await poolTrungTam.close();
+    } catch (e) {
+      console.error(`Lỗi kết nối máy chủ Trung Tâm: ${e.message}`);
+    }
+
+    if (allData.length === 0) {
+      console.log("Không có dữ liệu mới để đồng bộ.");
+      return;
+    }
+
+    console.log(`Đang gửi ${allData.length} hồ sơ qua Web API (thupham.id.vn)...`);
+    
+    const response = await fetch('https://thupham.id.vn/api/sync', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer CHITHANH_SYNC_TOKEN_2026'
+      },
+      body: JSON.stringify({ data: allData })
+    });
+
+    if (response.ok) {
+      const resData = await response.json();
+      console.log(`Đã ghi thành công tổng cộng ${resData.count} hồ sơ vào DB Web qua API!`);
+    } else {
+      console.error("Lỗi cập nhật CSDL qua API. Status:", response.status, await response.text());
     }
   } catch (err) {
-    console.error("Lỗi cập nhật CSDL Web:", err);
-  } finally {
-    if (poolWeb) await poolWeb.close();
+    console.error("Lỗi quá trình đồng bộ:", err);
   }
 }
 
