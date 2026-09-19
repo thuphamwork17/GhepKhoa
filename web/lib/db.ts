@@ -630,81 +630,58 @@ export async function doiChieuMotHocVien(vao: {
   const tenCuoi = hoTenCan.split(' ').pop() ?? hoTenCan;
   const hoTenLikeSql = `%${tenCuoi}%`;
 
-  const qKhoaHoc = `
-    SET NOCOUNT ON;
-    SELECT MaKH, ISNULL(CONVERT(varchar(10), NgayBG, 120), '') AS NgayBeGiang
-    FROM dbo.KhoaHoc
-    WHERE HangGPLX = @hangGplx
-      AND (REPLACE(TenKH, ' ', '') = @mau1
-       OR REPLACE(TenKH, ' ', '') LIKE @mau2);
-  `;
-
-  const qHocVienNhanh = `
-    SET NOCOUNT ON;
-    SELECT n.HoVaTen, 
-           RIGHT(n.NgaySinh,2) + '/' + SUBSTRING(n.NgaySinh,5,2) + '/' + LEFT(n.NgaySinh,4) AS NgaySinh,
-           ISNULL(n.SoCMT, '') AS Cccd,
-           ISNULL(n.NoiCT, '') AS DiaChi,
-           ISNULL(h.HangGPLXDaCo, '') AS HangGplx,
-           ISNULL(h.SoGPLXDaCo, '') AS SoGplx,
-           ISNULL(h.SoBD, '') AS MaHocVien,
-           @ngayBG AS NgayBeGiang
-    FROM dbo.NguoiLX n
-    JOIN dbo.NguoiLX_HoSo h ON h.MaDK = n.MaDK
-    WHERE h.MaKhoaHoc = @maKH
-      AND n.HoVaTen COLLATE Latin1_General_CI_AI LIKE @hoTenLike COLLATE Latin1_General_CI_AI;
-  `;
-
-  const qHocVienDuPhong = `
-    SET NOCOUNT ON;
-    SELECT n.HoVaTen, 
-           RIGHT(n.NgaySinh,2) + '/' + SUBSTRING(n.NgaySinh,5,2) + '/' + LEFT(n.NgaySinh,4) AS NgaySinh,
-           ISNULL(n.SoCMT, '') AS Cccd,
-           ISNULL(n.NoiCT, '') AS DiaChi,
-           ISNULL(h.HangGPLXDaCo, '') AS HangGplx,
-           ISNULL(h.SoGPLXDaCo, '') AS SoGplx,
-           ISNULL(h.SoBD, '') AS MaHocVien,
-           @ngayBG AS NgayBeGiang
-    FROM dbo.NguoiLX n
-    JOIN dbo.NguoiLX_HoSo h ON h.MaDK = n.MaDK
-    WHERE h.MaKhoaHoc = @maKH;
-  `;
-
-  const paramsMau = {
+  const paramsSync = {
+    maCS: { kieu: sql.VarChar, gt: maCoSo },
     mau1: { kieu: sql.NVarChar, gt: `${hangMa}KHÓA${soKhoa}` },
     mau2: { kieu: sql.NVarChar, gt: `${hangMa}KHÓA${soKhoa}/%` },
-    hangGplx: { kieu: sql.VarChar, gt: hangMa },
+    hoTenLike: { kieu: sql.NVarChar, gt: hoTenLikeSql },
   };
 
+  const qSyncNhanh = `
+    SET NOCOUNT ON;
+    SELECT HoVaTen, 
+           NgaySinh,
+           Cccd,
+           DiaChi,
+           HangGplxDaCo AS HangGplx,
+           SoGplxDaCo AS SoGplx,
+           MaHocVien,
+           NgayBeGiang
+    FROM dbo.Sync_HocVien
+    WHERE MaCoSo = @maCS
+      AND (REPLACE(TenKH, ' ', '') = @mau1 OR REPLACE(TenKH, ' ', '') LIKE @mau2)
+      AND HoVaTen COLLATE Latin1_General_CI_AI LIKE @hoTenLike COLLATE Latin1_General_CI_AI;
+  `;
+
+  const qSyncDuPhong = `
+    SET NOCOUNT ON;
+    SELECT HoVaTen, 
+           NgaySinh,
+           Cccd,
+           DiaChi,
+           HangGplxDaCo AS HangGplx,
+           SoGplxDaCo AS SoGplx,
+           MaHocVien,
+           NgayBeGiang
+    FROM dbo.Sync_HocVien
+    WHERE MaCoSo = @maCS
+      AND (REPLACE(TenKH, ' ', '') = @mau1 OR REPLACE(TenKH, ' ', '') LIKE @mau2);
+  `;
+
   try {
-    const truyVanFn = maCoSo === "92004" ? truyVanTrungTam : truyVanTruong;
+    dsKhoa = await truyVan(qSyncNhanh, paramsSync);
     
-    // Bước 1: Lấy Mã Khóa Học (MaKH)
-    const listKhoaHoc = await truyVanFn(qKhoaHoc, paramsMau);
-    
-    if (listKhoaHoc && listKhoaHoc.length > 0) {
-      const maKH = listKhoaHoc[0].MaKH;
-      const ngayBG = listKhoaHoc[0].NgayBeGiang;
-
-      const paramsHocVienNhanh = {
-        maKH: { kieu: sql.VarChar, gt: maKH },
-        ngayBG: { kieu: sql.VarChar, gt: ngayBG },
-        hoTenLike: { kieu: sql.NVarChar, gt: hoTenLikeSql },
+    if (dsKhoa.length === 0) {
+      // Nếu không tìm thấy tên, lấy cả khóa
+      const paramsSyncAll = {
+        maCS: { kieu: sql.VarChar, gt: maCoSo },
+        mau1: { kieu: sql.NVarChar, gt: `${hangMa}KHÓA${soKhoa}` },
+        mau2: { kieu: sql.NVarChar, gt: `${hangMa}KHÓA${soKhoa}/%` }
       };
-
-      // Bước 2: Lấy học viên của khóa
-      dsKhoa = await truyVanFn(qHocVienNhanh, paramsHocVienNhanh);
-
-      if (dsKhoa.length === 0) {
-        const paramsHocVienDuPhong = {
-          maKH: { kieu: sql.VarChar, gt: maKH },
-          ngayBG: { kieu: sql.VarChar, gt: ngayBG },
-        };
-        dsKhoa = await truyVanFn(qHocVienDuPhong, paramsHocVienDuPhong);
-      }
+      dsKhoa = await truyVan(qSyncDuPhong, paramsSyncAll);
     }
   } catch (e) {
-    console.error("Lỗi 2-step truy vấn học viên:", e);
+    console.error("Lỗi truy vấn Sync_HocVien:", e);
   }
 
   if (dsKhoa.length === 0) {

@@ -244,11 +244,11 @@ SELECT n.HoVaTen,
   ISNULL(n.SoCMT,''),
   LTRIM(RTRIM(ISNULL(n.NoiTT,N'') + N' ' + ISNULL(dv.TenDayDu,N''))),
   ISNULL(h.HangGPLXDaCo,''), ISNULL(h.SoGPLXDaCo,''),
-  n.MaDK + '-' + @hg + '/' + @cs,
+  ISNULL(n.MaDK,'') + '-' + ISNULL(@hg,''),
   ISNULL(@bg, '')
 FROM dbo.NguoiLX_HoSo h
 JOIN dbo.NguoiLX n ON n.MaDK = h.MaDK
-LEFT JOIN dbo.DM_DVHC dv ON dv.MaDvhc = n.NoiTT_MaDVHC AND dv.TrangThai = 1
+OUTER APPLY (SELECT TOP 1 TenDayDu FROM dbo.DM_DVHC WHERE MaDvhc = n.NoiTT_MaDVHC ORDER BY TrangThai DESC) dv
 WHERE h.MaKhoaHoc = @ma;"""
     ra = []
     for h in _sqlcmd(q):
@@ -380,11 +380,11 @@ SELECT n.HoVaTen,
   ISNULL(n.SoCMT,''),
   LTRIM(RTRIM(ISNULL(n.NoiTT,N'') + N' ' + ISNULL(dv.TenDayDu,N''))),
   ISNULL(h.HangGPLXDaCo,''), ISNULL(h.SoGPLXDaCo,''),
-  n.MaDK + '-' + @hg + '/' + @cs,
+  ISNULL(n.MaDK,'') + '-' + ISNULL(@hg,''),
   ISNULL(@bg, '')
 FROM dbo.NguoiLX_HoSo h
 JOIN dbo.NguoiLX n ON n.MaDK = h.MaDK
-LEFT JOIN dbo.DM_DVHC dv ON dv.MaDvhc = n.NoiTT_MaDVHC AND dv.TrangThai = 1
+OUTER APPLY (SELECT TOP 1 TenDayDu FROM dbo.DM_DVHC WHERE MaDvhc = n.NoiTT_MaDVHC ORDER BY TrangThai DESC) dv
 WHERE h.MaKhoaHoc = @ma;"""
     ra = []
     for h in _sqlcmd_truong(q):
