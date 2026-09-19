@@ -16,7 +16,7 @@ export async function POST(request: Request) {
 
     console.log(`Nhận được ${data.length} hồ sơ từ API Sync.`);
 
-    const poolWeb = await pool;
+    const poolWeb = await pool();
     const transaction = new sql.Transaction(poolWeb);
     await transaction.begin();
 
