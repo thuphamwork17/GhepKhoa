@@ -85,23 +85,30 @@ async function runSync() {
       return;
     }
 
-    console.log(`Đang gửi ${allData.length} hồ sơ qua Web API (thupham.id.vn)...`);
+    console.log(`Đang gửi ${allData.length} hồ sơ qua Web API (thupham.id.vn) (chia nhỏ từng phần)...`);
     
-    const response = await fetch('https://thupham.id.vn/api/sync', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer CHITHANH_SYNC_TOKEN_2026'
-      },
-      body: JSON.stringify({ data: allData })
-    });
+    const CHUNK_SIZE = 5000;
+    let thanhCong = 0;
+    for (let i = 0; i < allData.length; i += CHUNK_SIZE) {
+      const chunk = allData.slice(i, i + CHUNK_SIZE);
+      console.log(`Đang gửi phần ${Math.floor(i/CHUNK_SIZE) + 1} (${chunk.length} hồ sơ)...`);
+      const response = await fetch('http://localhost:3000/api/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer CHITHANH_SYNC_TOKEN_2026'
+        },
+        body: JSON.stringify({ data: chunk, clear: i === 0 })
+      });
 
-    if (response.ok) {
-      const resData = await response.json();
-      console.log(`Đã ghi thành công tổng cộng ${resData.count} hồ sơ vào DB Web qua API!`);
-    } else {
-      console.error("Lỗi cập nhật CSDL qua API. Status:", response.status, await response.text());
+      if (response.ok) {
+        const resData = await response.json();
+        thanhCong += resData.count;
+      } else {
+        console.error("Lỗi cập nhật phần này. Status:", response.status, await response.text());
+      }
     }
+    console.log(`Đã ghi thành công tổng cộng ${thanhCong}/${allData.length} hồ sơ vào DB Web qua API!`);
   } catch (err) {
     console.error("Lỗi quá trình đồng bộ:", err);
   }
