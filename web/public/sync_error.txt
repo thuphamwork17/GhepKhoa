@@ -1,0 +1,8 @@
+ConnectionError: Failed to connect to localhost:1433 - Could not connect (sequence)
+    at D:\GhepKhoa\web\node_modules\mssql\lib\tedious\connection-pool.js:86:17
+    at Connection.onConnect (D:\GhepKhoa\web\node_modules\tedious\lib\connection.js:883:9)
+    at Object.onceWrapper (node:events:623:26)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (D:\GhepKhoa\web\node_modules\tedious\lib\connection.js:1022:18)
+    at D:\GhepKhoa\web\node_modules\tedious\lib\connection.js:901:14
+    at process.processTicksAndRejections (node:internal/process/task_queues:84:11)

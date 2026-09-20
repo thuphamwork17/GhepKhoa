@@ -673,19 +673,25 @@ export async function doiChieuMotHocVien(vao: {
     
     // Lọc bằng logic an toàn trên TS thay vì REPLACE trong SQL (tránh lỗi font KHÓA/KHOÁ)
     dsKhoa = rawKhoa.filter(r => {
-      // Nếu có HangGplxGoc, so sánh trực tiếp, nếu không thì tìm trong TenKH
-      const dungHang = r.HangGplxGoc ? r.HangGplxGoc.trim() === hangMa : r.TenKH?.includes(hangMa);
+      // Ưu tiên 1: Dùng hàm maKhoaTuTenKH để extract trực tiếp
+      if (r.TenKH && maKhoaTuTenKH(r.TenKH) === maKhoaGoc) return true;
+      
+      // Ưu tiên 2: Fallback tìm tương đối
+      const hangTrongTen = r.TenKH ? (r.TenKH.includes(` ${hangMa} `) || r.TenKH.startsWith(`${hangMa} `) || r.TenKH.includes(`${hangMa}K`)) : false;
+      const dungHang = r.HangGplxGoc ? r.HangGplxGoc.trim() === hangMa : hangTrongTen;
       const dungKhoa = r.TenKH?.includes(soKhoa.toString());
-      return dungHang && dungKhoa;
+      return (dungHang || hangTrongTen) && dungKhoa;
     });
     
     if (dsKhoa.length === 0) {
       // Fallback lấy toàn bộ và lọc
       const rawAll = await truyVan<any>(qSyncDuPhong, { maCS: { kieu: sql.VarChar, gt: maCoSo } });
       dsKhoa = rawAll.filter(r => {
-        const dungHang = r.HangGplxGoc ? r.HangGplxGoc.trim() === hangMa : r.TenKH?.includes(hangMa);
+        if (r.TenKH && maKhoaTuTenKH(r.TenKH) === maKhoaGoc) return true;
+        const hangTrongTen = r.TenKH ? (r.TenKH.includes(` ${hangMa} `) || r.TenKH.startsWith(`${hangMa} `) || r.TenKH.includes(`${hangMa}K`)) : false;
+        const dungHang = r.HangGplxGoc ? r.HangGplxGoc.trim() === hangMa : hangTrongTen;
         const dungKhoa = r.TenKH?.includes(soKhoa.toString());
-        return dungHang && dungKhoa;
+        return (dungHang || hangTrongTen) && dungKhoa;
       });
     }
   } catch (e) {

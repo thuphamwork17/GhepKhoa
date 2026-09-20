@@ -104,8 +104,8 @@ export function poolTrungTam(): Promise<sql.ConnectionPool> {
         trustServerCertificate: true, 
         enableArithAbort: true 
       },
-      requestTimeout: 15_000,
-      connectionTimeout: 10_000,
+      requestTimeout: 30_000,
+      connectionTimeout: 15_000,
     })
       .connect()
       .catch((e) => {
