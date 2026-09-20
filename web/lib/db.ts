@@ -532,7 +532,7 @@ async function dongBoKhoaGPLX(maKhoa: string) {
 
 function maKhoaTuTenKH(tenKH: string): string {
   if (!tenKH) return "";
-  const match = tenKH.match(/^\s*([A-Za-zĐđ()]+)\s*(?:KHÓA|KHOÁ)\s*(\d+)/i);
+  const match = tenKH.match(/^\s*([A-Za-zĐđ()0-9\-\.\>]+)\s*K(?:HÓA|HOÁ)?\s*(\d+)/i);
   if (match) {
     const ma = `${match[1]}K${match[2]}`.toUpperCase().replace(/Đ/g, 'D');
     return chuanHoaMaKhoa(ma);
@@ -547,59 +547,40 @@ export async function timHocVienKhoaCu(motPhanTen: string, maCoSo: string, gioiH
 
   const q = `
     SET NOCOUNT ON;
-    SELECT TOP ${gioiHan} n.HoVaTen,
-      RIGHT(n.NgaySinh,2) + '/' + SUBSTRING(n.NgaySinh,5,2) + '/' + LEFT(n.NgaySinh,4) AS NgaySinh,
-      ISNULL(n.SoCMT,'') AS Cccd,
-      k.TenKH AS TenKH
-    FROM dbo.NguoiLX n
-    JOIN dbo.NguoiLX_HoSo h ON h.MaDK = n.MaDK
-    JOIN dbo.KhoaHoc k ON k.MaKH = h.MaKhoaHoc
-    WHERE n.HoVaTen COLLATE Latin1_General_CI_AI LIKE @mau COLLATE Latin1_General_CI_AI
-    ORDER BY k.NgayKG DESC;
+    SELECT TOP ${gioiHan} HoVaTen,
+      NgaySinh,
+      Cccd,
+      TenKH
+    FROM dbo.Sync_HocVien
+    WHERE MaCoSo = @maCS
+      AND HoVaTen COLLATE Latin1_General_CI_AI LIKE @mau COLLATE Latin1_General_CI_AI
+    ORDER BY NgayDongBo DESC;
   `;
   const mau = `%${motPhanTen.replace(/ /g, '%')}%`;
-  const thamSo = { mau: { kieu: sql.NVarChar, gt: mau } };
+  const thamSo = { 
+    mau: { kieu: sql.NVarChar, gt: mau },
+    maCS: { kieu: sql.VarChar, gt: maCoSo }
+  };
 
-  let rs: any[] = [];
-  if (maCoSo === "92004") {
-    try { rs = await truyVanTrungTam<{HoVaTen: string; NgaySinh: string; Cccd: string; TenKH: string}>(q, thamSo); } catch(e) { console.error(e); }
-  } else if (maCoSo === "92001") {
-    try { rs = await truyVanTruong<{HoVaTen: string; NgaySinh: string; Cccd: string; TenKH: string}>(q, thamSo); } catch(e) { console.error(e); }
+  try {
+    const rs = await truyVan<{HoVaTen: string; NgaySinh: string; Cccd: string; TenKH: string}>(q, thamSo);
+    return rs.map(r => {
+      // Fix format NgaySinh from yyyymmdd to dd/mm/yyyy if needed
+      let ns = r.NgaySinh ? r.NgaySinh.trim() : "";
+      if (ns && ns.length === 8 && !ns.includes("/")) {
+        ns = `${ns.substring(6,8)}/${ns.substring(4,6)}/${ns.substring(0,4)}`;
+      }
+      return {
+        hoTen: r.HoVaTen ? r.HoVaTen.trim() : "",
+        ngaySinh: ns,
+        cccd: r.Cccd ? r.Cccd.trim() : "",
+        maKhoaGoc: r.TenKH ? maKhoaTuTenKH(r.TenKH) : ""
+      };
+    }).filter(x => x.maKhoaGoc !== "");
+  } catch(e) {
+    console.error("Lỗi timHocVienKhoaCu Sync_HocVien:", e);
+    return [];
   }
-
-  if (rs.length === 0) {
-    const qDm = `
-      SET NOCOUNT ON;
-      SELECT TOP ${gioiHan} hv.HoTen AS HoVaTen,
-        ISNULL(CONVERT(varchar,hv.NgaySinh,103),'') AS NgaySinh,
-        ISNULL(hv.Cccd,'') AS Cccd,
-        k.HangMa, k.SoKhoa
-      FROM dbo.HocVienKhoa hvk
-      JOIN dbo.HocVien hv ON hv.HocVienId = hvk.HocVienId
-      JOIN dbo.Khoa k       ON k.KhoaId    = hvk.KhoaId
-      JOIN dbo.DonVi dv     ON dv.DonViId  = k.DonViId
-      WHERE dv.MaCoSo = @maCS
-        AND hv.HoTen COLLATE Latin1_General_CI_AI LIKE @mau COLLATE Latin1_General_CI_AI;
-    `;
-    try {
-      const rsDm = await truyVan<{HoVaTen: string; NgaySinh: string; Cccd: string; HangMa: string; SoKhoa: number}>(
-        qDm, { ...thamSo, maCS: { kieu: sql.VarChar, gt: maCoSo } }
-      );
-      return rsDm.map(r => ({
-        hoTen: r.HoVaTen.trim(),
-        ngaySinh: r.NgaySinh.trim(),
-        cccd: r.Cccd.trim(),
-        maKhoaGoc: `${r.HangMa.trim()}K${r.SoKhoa}`
-      }));
-    } catch(e) { console.error(e); }
-  }
-
-  return rs.map(r => ({
-    hoTen: r.HoVaTen.trim(),
-    ngaySinh: r.NgaySinh.trim(),
-    cccd: r.Cccd.trim(),
-    maKhoaGoc: maKhoaTuTenKH(r.TenKH)
-  }));
 }
 
 export async function doiChieuMotHocVien(vao: {
