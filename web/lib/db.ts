@@ -774,7 +774,7 @@ export async function doiChieuMotHocVien(vao: {
     -- Tự động thêm Hạng GPLX nếu chưa tồn tại để tránh lỗi Foreign Key
     IF NOT EXISTS (SELECT 1 FROM dbo.HangGPLX WHERE HangMa = @hangMa)
     BEGIN
-        INSERT INTO dbo.HangGPLX (HangMa, TenHang, SoThuTu) 
+        INSERT INTO dbo.HangGPLX (HangMa, TenHang, ThuTu) 
         VALUES (@hangMa, @hangMa, 99);
     END
 

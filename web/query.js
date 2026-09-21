@@ -21,13 +21,13 @@ async function test(cfg, name) {
   try {
     const pool = await sql.connect(cfg);
     const result = await pool.request().query(`
-      SELECT TABLE_NAME 
-      FROM INFORMATION_SCHEMA.TABLES 
-      WHERE TABLE_NAME LIKE '%DVHC%' OR TABLE_NAME LIKE '%HanhChinh%' OR TABLE_NAME LIKE '%Tinh%' OR TABLE_NAME LIKE '%Xa%' OR TABLE_NAME LIKE '%Huyen%'
+      SELECT TOP 1 * FROM dbo.HangGPLX
     `);
-    console.log(name, result.recordset);
+    console.log(result.recordset);
     await pool.close();
   } catch (err) {
+    console.error(err);
+  }
     console.error(name, err);
   }
 }
