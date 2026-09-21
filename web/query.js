@@ -21,11 +21,9 @@ async function test(cfg, name) {
   try {
     const pool = await sql.connect(cfg);
     const result = await pool.request().query(`
-      SELECT n.HoVaTen, k.MaKH, k.TenKH, k.HangGPLX
-      FROM dbo.NguoiLX n
-      JOIN dbo.NguoiLX_HoSo h ON n.MaDK = h.MaDK
-      JOIN dbo.KhoaHoc k ON k.MaKH = h.MaKhoaHoc
-      WHERE n.HoVaTen LIKE N'%THÚY AN%'
+      SELECT TABLE_NAME 
+      FROM INFORMATION_SCHEMA.TABLES 
+      WHERE TABLE_NAME LIKE '%DVHC%' OR TABLE_NAME LIKE '%HanhChinh%' OR TABLE_NAME LIKE '%Tinh%' OR TABLE_NAME LIKE '%Xa%' OR TABLE_NAME LIKE '%Huyen%'
     `);
     console.log(name, result.recordset);
     await pool.close();

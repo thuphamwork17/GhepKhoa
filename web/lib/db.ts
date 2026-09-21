@@ -771,6 +771,13 @@ export async function doiChieuMotHocVien(vao: {
     IF @dv IS NULL BEGIN RAISERROR(N'khong co don vi ma co so', 16, 1); RETURN; END
     BEGIN TRAN;
 
+    -- Tự động thêm Hạng GPLX nếu chưa tồn tại để tránh lỗi Foreign Key
+    IF NOT EXISTS (SELECT 1 FROM dbo.HangGPLX WHERE HangMa = @hangMa)
+    BEGIN
+        INSERT INTO dbo.HangGPLX (HangMa, TenHang, SoThuTu) 
+        VALUES (@hangMa, @hangMa, 99);
+    END
+
     MERGE dbo.Khoa AS t
     USING (SELECT @dv AS DonViId, @hangMa AS HangMa, @soKhoa AS SoKhoa,
                   @ngayBg AS NgayBeGiang) AS n
@@ -787,6 +794,7 @@ export async function doiChieuMotHocVien(vao: {
                   @dc AS DiaChi, @soGplx AS SoGplx,
                   @hangGplx AS HangGplx) AS n
        ON t.Cccd = n.Cccd
+    WHEN MATCHED THEN UPDATE SET NoiThuongTru=n.DiaChi, SoGplxDaCo=n.SoGplx, HangGplxDaCo=n.HangGplx
     WHEN NOT MATCHED THEN INSERT (Cccd,HoTen,NgaySinh,NoiThuongTru,SoGplxDaCo,HangGplxDaCo)
          VALUES (n.Cccd,n.HoTen,n.NgaySinh,n.DiaChi,n.SoGplx,n.HangGplx);
     DECLARE @hv int = (SELECT HocVienId FROM dbo.HocVien WHERE Cccd = @cccd);

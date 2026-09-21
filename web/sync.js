@@ -39,7 +39,7 @@ const qLayDuLieu = `
          n.HoVaTen, 
          RIGHT(n.NgaySinh,2) + '/' + SUBSTRING(n.NgaySinh,5,2) + '/' + LEFT(n.NgaySinh,4) AS NgaySinh,
          ISNULL(n.SoCMT, '') AS Cccd,
-         ISNULL(n.NoiCT, '') AS DiaChi,
+         LTRIM(RTRIM(ISNULL(n.NoiTT, N'') + N', ' + ISNULL(dv.TenDayDu, N''))) AS DiaChi,
          ISNULL(h.HangGPLXDaCo, '') AS HangGplxDaCo,
          ISNULL(h.SoGPLXDaCo, '') AS SoGplxDaCo,
          ISNULL(n.MaDK, '') + '-' + ISNULL(k.HangGPLX, '') AS MaHocVien,
@@ -50,6 +50,7 @@ const qLayDuLieu = `
   FROM dbo.NguoiLX n
   JOIN dbo.NguoiLX_HoSo h ON h.MaDK = n.MaDK
   JOIN dbo.KhoaHoc k ON k.MaKH = h.MaKhoaHoc
+  OUTER APPLY (SELECT TOP 1 TenDayDu FROM dbo.DM_DVHC WHERE MaDvhc = n.NoiTT_MaDVHC ORDER BY TrangThai DESC) dv
 `;
 
 async function runSync() {
