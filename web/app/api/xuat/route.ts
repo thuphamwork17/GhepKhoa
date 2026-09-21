@@ -55,9 +55,15 @@ export async function GET(req: NextRequest) {
     if (!dot || (pv !== undefined && dot.DonViId !== pv)) dotId = undefined;
   }
 
-  const dsGoc = (await dsDangKy({ dotId, donViId: pv })).filter((d) =>
+  const idsParam = sp.get("ids");
+  const selectedIds = idsParam ? new Set(idsParam.split(",").map(Number)) : null;
+
+  let dsGoc = (await dsDangKy({ dotId, donViId: pv })).filter((d) =>
     chiDuyet ? d.TrangThai === "DUYET" : true,
   );
+  if (selectedIds) {
+    dsGoc = dsGoc.filter((d) => selectedIds.has(d.DangKyId));
+  }
 
   // Chưa chọn hẳn một đợt qua URL (đang xem "Tất cả đợt") nhưng dữ liệu lọc
   // ra chỉ thuộc đúng một đợt duy nhất — vẫn coi như đã chọn đợt đó, để "Tải

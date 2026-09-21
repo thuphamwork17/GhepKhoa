@@ -216,6 +216,7 @@ export default async function Trang({
         <table className="w-full min-w-[800px] text-[14px]">
           <thead>
             <tr className="border-b border-[#dfe4ec] bg-[#f7f9fc] text-left text-[12px] uppercase tracking-wide text-[#5c6878]">
+              <th className="px-3 py-3 font-semibold"></th>
               <th className="px-3 py-3 font-semibold">#</th>
               <th className="px-3 py-3 font-semibold">Người đăng ký khai</th>
               <th className="px-3 py-3 font-semibold">
@@ -230,7 +231,7 @@ export default async function Trang({
             {ds.length === 0 && (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-4 py-12 text-center text-[#7a8494]"
                 >
                   Chưa có ai đăng ký.
@@ -244,6 +245,9 @@ export default async function Trang({
                   key={d.DangKyId}
                   className="border-b border-[#eef1f5] align-top last:border-0 hover:bg-[#fafbfd]"
                 >
+                  <td className="pl-4 pr-1 py-3 tabular-nums text-[#9aa4b4] w-8">
+                    <input type="checkbox" name="row-check" value={d.DangKyId} className="w-4 h-4 rounded border-[#c8d2e0] text-[#0b5590] focus:ring-[#0b5590]" />
+                  </td>
                   <td className="px-3 py-3 tabular-nums text-[#9aa4b4]">
                     {(trang - 1) * SO_DONG_MOI_TRANG + i + 1}
                   </td>

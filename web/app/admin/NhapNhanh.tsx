@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { goiYHocVien, themDongNhap, type GoiY, type KetQua } from "../actions";
+import { themDongNhap, type KetQua } from "../actions";
 
 export type DotChonNhanh = {
   DotId: number;
@@ -50,10 +50,6 @@ export default function NhapNhanh({
   const [khoaGoc, setKhoaGoc] = useState("");
   const [ngaySinh, setNgaySinh] = useState("");
 
-  const [goiY, setGoiY] = useState<GoiY[]>([]);
-  const [hienGoiY, setHienGoiY] = useState(false);
-  const demGoiY = useRef(0);
-
   // Xóa ô Họ tên/Ngày sinh ngay khi kq đổi (sau khi gửi thành công) — chỉnh
   // state lúc render thay vì trong effect (mẫu React khuyến nghị cho "suy ra
   // state từ props/kết quả đổi"), tránh bị cảnh báo set-state-in-effect.
@@ -65,43 +61,13 @@ export default function NhapNhanh({
       setNgaySinh("");
     }
   }
-  // focus() là thao tác DOM thật, phải nằm trong effect — nhưng effect này
-  // không gọi setState nào cả nên không vướng rule set-state-in-effect.
+
+  // focus() là thao tác DOM thật, phải nằm trong effect
   useEffect(() => {
     if (kq.ok && !kq.loi) oHoTen.current?.focus();
   }, [kq]);
 
-  // Gợi ý theo tên đang gõ, có debounce — không gọi server mỗi
-  // phím gõ, chỉ gọi khi ngừng gõ 800ms để tránh quá tải server.
-  // Đánh số lần gọi để bỏ qua kết quả trả về trễ của lần gọi cũ hơn.
-  // Không gọi setGoiY([]) đồng bộ khi tên/khóa chưa đủ điều kiện — thay vào
-  // đó dangHienGoiY (tính lúc render) tự ẩn danh sách cũ, không cần dọn state.
-  const dieuKienGoiYHopLe =
-    hoTen.trim().length >= 2 && dotId !== "" && !dangGui;
-  useEffect(() => {
-    const ten = hoTen.trim();
-    const khoa = khoaGoc.trim();
-    if (ten.length < 2 || dotId === "" || dangGui) return;
-    const idHen = ++demGoiY.current;
-    const hen = setTimeout(() => {
-      goiYHocVien(Number(dotId), ten, khoa).then((ds) => {
-        if (idHen === demGoiY.current) setGoiY(ds);
-      });
-    }, 800);
-    return () => clearTimeout(hen);
-  }, [hoTen, khoaGoc, dotId, dangGui]);
-
-  const chonGoiY = (g: GoiY) => {
-    setHoTen(g.hoTen);
-    if (g.ngaySinh) setNgaySinh(g.ngaySinh);
-    if (g.maKhoaGoc) setKhoaGoc(g.maKhoaGoc);
-    setGoiY([]);
-    setHienGoiY(false);
-    oHoTen.current?.focus();
-  };
-
   const daKhop = kq.ok && kq.thongBao?.startsWith("Đã thêm và khớp");
-  const dangHienGoiY = hienGoiY && dieuKienGoiYHopLe && goiY.length > 0;
 
   if (!dots.length) {
     return (
@@ -155,35 +121,9 @@ export default function NhapNhanh({
             autoComplete="off"
             placeholder="NGUYỄN VĂN A"
             value={hoTen}
-            onChange={(e) => {
-              setHoTen(e.target.value);
-              setHienGoiY(true);
-            }}
-            onFocus={() => setHienGoiY(true)}
-            onBlur={() => setTimeout(() => setHienGoiY(false), 150)}
+            onChange={(e) => setHoTen(e.target.value)}
             className="o-nhap mt-1 w-full sm:w-56"
           />
-          {dangHienGoiY && (
-            <ul className="the absolute left-0 top-full z-10 mt-1 max-h-56 w-full sm:w-64 overflow-y-auto py-1">
-              {goiY.map((g, i) => (
-                <li key={i}>
-                  <button
-                    type="button"
-                    // onMouseDown (không phải onClick) để chạy trước onBlur của ô nhập.
-                    onMouseDown={() => chonGoiY(g)}
-                    className="block w-full px-3 py-1.5 text-left hover:bg-[#eaf2f9]"
-                  >
-                    <span className="block text-[13px] font-medium text-[#17202e]">
-                      {g.hoTen} {g.maKhoaGoc && <span className="font-normal text-[#0b5590]">- Khóa: {g.maKhoaGoc}</span>}
-                    </span>
-                    <span className="block text-[11px] text-[#7a8494]">
-                      {g.ngaySinh ? ngay(g.ngaySinh) : "chưa rõ ngày sinh"}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
         </label>
 
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">

@@ -12,7 +12,13 @@ export default function XuatFile({ dotId }: { dotId: number }) {
     setDangGui(true);
     setThongBao(null);
     try {
-      const res = await fetch(`/api/xuat?dot=${dotId}&dinhDang=xlsx`);
+      const checked = Array.from(document.querySelectorAll('input[name="row-check"]:checked'))
+        .map((el) => (el as HTMLInputElement).value);
+      const urlQuery = checked.length > 0 
+        ? `/api/xuat?dot=${dotId}&dinhDang=xlsx&ids=${checked.join(",")}` 
+        : `/api/xuat?dot=${dotId}&dinhDang=xlsx`;
+      
+      const res = await fetch(urlQuery);
       if (!res.ok) {
         const text = await res.text();
         setThongBao({ ok: false, txt: text || "Có lỗi xảy ra khi xuất file." });
