@@ -1,37 +1,44 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 export default function TimKiem() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const [tuKhoa, setTuKhoa] = useState(searchParams.get("q") ?? "");
+  
+  const qUrl = searchParams.get("q") ?? "";
+  const [tuKhoa, setTuKhoa] = useState(qUrl);
+  const [lastSyncQ, setLastSyncQ] = useState(qUrl);
+
+  // Sync tu URL xuong state neu URL thay doi tu ben ngoai (vi du: bam nut Back, clear filter)
+  useEffect(() => {
+    if (qUrl !== lastSyncQ) {
+      setTuKhoa(qUrl);
+      setLastSyncQ(qUrl);
+    }
+  }, [qUrl, lastSyncQ]);
 
   useEffect(() => {
-    setTuKhoa(searchParams.get("q") ?? "");
-  }, [searchParams]);
-
-  useEffect(() => {
-    const qUrl = searchParams.get("q") ?? "";
-    // Chỉ cập nhật URL nếu tuKhoa (đã trim) khác với tuKhoa trên URL
-    // hoặc nếu tuKhoa trống nhưng trên URL lại có q
-    if (tuKhoa.trim() !== qUrl && (tuKhoa.trim() || qUrl)) {
-      const hen = setTimeout(() => {
+    const hen = setTimeout(() => {
+      const currentTrimmed = tuKhoa.trim();
+      if (currentTrimmed !== qUrl && (currentTrimmed || qUrl)) {
         const p = new URLSearchParams(searchParams.toString());
-        if (tuKhoa.trim()) {
-          p.set("q", tuKhoa.trim());
+        if (currentTrimmed) {
+          p.set("q", currentTrimmed);
         } else {
           p.delete("q");
         }
         p.delete("trang");
         const qs = p.toString();
-        router.replace(qs ? `${pathname}?${qs}` : pathname);
-      }, 300);
-      return () => clearTimeout(hen);
-    }
-  }, [tuKhoa, router, pathname, searchParams]);
+        
+        setLastSyncQ(currentTrimmed);
+        router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+      }
+    }, 400);
+    return () => clearTimeout(hen);
+  }, [tuKhoa, router, pathname, searchParams, qUrl]);
 
   return (
     <div className="relative w-full sm:w-80 shrink-0">
