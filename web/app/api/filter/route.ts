@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     const outWsThTienMat = outWbTongHop.addWorksheet('Tiền Mặt');
 
     // Các cột cần lấy cho Tổng hợp: Số hóa đơn(5), Mã khách hàng(6), Tên đơn vị mua hàng(8), Họ và tên người mua(9), Tổng tiền thanh toán(14), Người tạo(18), Hình thức thanh toán(21)
-    const thCols = [5, 6, 8, 9, 14, 18, 21];
+    const thCols = [6, 7, 9, 10, 14, 19, 21];
     
     // Header for output
     const thHeader = ['Số hóa đơn', 'Mã khách hàng', 'Tên đơn vị mua hàng', 'Họ và tên người mua', 'Tổng tiền thanh toán', 'Người tạo', 'Hình thức thanh toán'];
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
       }
       if (thDataStarted) {
         const values = row.values as any[];
-        if (values && values[5]) { // Has 'Số hoá đơn'
+        if (values && values[6]) { // Has 'Số hoá đơn'
           const rowData = thCols.map(col => values[col]);
           const hinhThuc = values[21] ? values[21].toString().toLowerCase() : '';
           
